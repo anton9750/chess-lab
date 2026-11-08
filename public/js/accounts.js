@@ -389,8 +389,8 @@ function gamePGN(game) {
   const chess = new Chess(game.startFen || undefined);
   const d = new Date(game.date || Date.now());
   const date = `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, "0")}.${String(d.getDate()).padStart(2, "0")}`;
-  chess.setHeader("Event", game.modeLabel ? `Chesshub: ${game.modeLabel}` : "Chesshub game");
-  chess.setHeader("Site", "Chesshub");
+  chess.setHeader("Event", game.modeLabel ? `Chesslab: ${game.modeLabel}` : "Chesslab game");
+  chess.setHeader("Site", "Chesslab");
   chess.setHeader("Date", date);
   chess.setHeader("White", game.white ? game.white.name : "White");
   chess.setHeader("Black", game.black ? game.black.name : "Black");
@@ -408,7 +408,7 @@ function variantPGN(game) {
   const v = findVariant(game.variant);
   const tag = (k, val) => `[${k} "${String(val).replace(/"/g, "'")}"]`;
   const lines = [
-    tag("Event", `Chesshub: ${game.modeLabel || v.name}`), tag("Site", "Chesshub"),
+    tag("Event", `Chesslab: ${game.modeLabel || v.name}`), tag("Site", "Chesslab"),
     tag("White", game.white ? game.white.name : "White"), tag("Black", game.black ? game.black.name : "Black"),
     tag("Result", game.result || "*"), tag("Variant", v.name), tag("SetUp", "1"), tag("FEN", game.startFen),
   ];

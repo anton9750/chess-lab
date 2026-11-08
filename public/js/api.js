@@ -32,7 +32,7 @@ const API = {
     try {
       response = await fetch("/api" + path, { method, headers, body: body ? JSON.stringify(body) : undefined });
     } catch (e) {
-      throw Object.assign(new Error("Can't reach the Chesshub server. Check your internet connection."), { status: 0 });
+      throw Object.assign(new Error("Can't reach the Chesslab server. Check your internet connection."), { status: 0 });
     }
     let data = {};
     try { data = await response.json(); } catch (e) { /* tomt svar */ }

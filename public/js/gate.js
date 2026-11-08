@@ -78,7 +78,7 @@ const Gate = {
     this.askedAgain = true;
     try { localStorage.removeItem(GATE_KEY); } catch (e) { /* ignorer */ }
     this.showLock(false);
-    $("gate-message").textContent = "Chesshub has been updated! Please open your invite link from " + GATE_OWNER + " once more to continue.";
+    $("gate-message").textContent = "Chesslab has been updated! Please open your invite link from " + GATE_OWNER + " once more to continue.";
   },
 
   // Låse-skærmens formularer: indsæt invitationslinket, eller log ind med sin konto
@@ -108,14 +108,14 @@ const Gate = {
     $("gate").classList.remove("hidden");
     $("gate-message").textContent = wrongKey
       ? "That invite link isn't valid anymore. Ask " + GATE_OWNER + " for a new one."
-      : "Chesshub is invite-only. Ask " + GATE_OWNER + " for an invite link to get in.";
+      : "Chesslab is invite-only. Ask " + GATE_OWNER + " for an invite link to get in.";
   },
 
   unlock(firstTime) {
     document.documentElement.classList.remove("gate-locked");
     $("gate").classList.add("hidden");
     if (firstTime) {
-      showToast("Welcome to Chesshub! 🎉");
+      showToast("Welcome to Chesslab! 🎉");
       Friends.start(); // nu må vi gå på vennenetværket
     }
     if (this.afterUnlock) {

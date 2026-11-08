@@ -532,7 +532,7 @@ const Online = {
           <h2>${this.challenging ? "Challenge sent!" : "Invite a friend"}</h2>
           <p>${this.challenging
             ? `Waiting for <b>${escapeHTML(this.challenging)}</b> to accept. They can also join with this code:`
-            : "Send this code to your friend. They open Chesshub, go to <b>Play a Friend</b> and enter it."}</p>
+            : "Send this code to your friend. They open Chesslab, go to <b>Play a Friend</b> and enter it."}</p>
           <div class="friend-code">${this.status === "creating" ? "······" : this.code}</div>
           ${isHosted() ? `<button class="btn btn-green" data-friend="copy-link" ${this.status === "creating" ? "disabled" : ""}>Copy invite link</button>` : ""}
           <button class="btn btn-gray" data-friend="copy" ${this.status === "creating" ? "disabled" : ""}>Copy code</button>
@@ -578,8 +578,8 @@ const Online = {
           <input class="friend-input" id="friend-code" maxlength="8" placeholder="Enter code, e.g. K7Q2MX" autocomplete="off">
           <button class="btn btn-gray btn-huge" data-friend="join">Join</button>
         </div>
-        <p class="rv-muted friend-note">Both players just need the Chesshub link. Games connect directly between
-        your browsers – and if your network blocks that, they go through the Chesshub server instead.</p>
+        <p class="rv-muted friend-note">Both players just need the Chesslab link. Games connect directly between
+        your browsers – and if your network blocks that, they go through the Chesslab server instead.</p>
       </div>`;
   },
 

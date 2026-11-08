@@ -242,14 +242,14 @@ const Watch = {
     const sorted = (games || []).slice().sort((a, b) => isFriend(b) - isFriend(a) || b.updated - a.updated);
     return `
       <div class="pz-scroll">
-        <h2 class="pz-heading">Live on Chesshub</h2>
+        <h2 class="pz-heading">Live on Chesslab</h2>
         ${games === null ? `<div class="friend-spinner"><span class="spinner"></span>Loading…</div>`
           : sorted.length ? sorted.map((g) => `
             <button class="daily-row ${isFriend(g) ? "attention" : ""}" data-live="${escapeHTML(g.id)}">
               <span class="daily-row-text"><b>${escapeHTML(g.white)} ${g.whiteRating ? `(${g.whiteRating})` : ""} vs ${escapeHTML(g.black)} ${g.blackRating ? `(${g.blackRating})` : ""}</b>
               <span>${isVariant(g.variant) ? findVariant(g.variant).icon + " " + findVariant(g.variant).name + " · " : ""}${escapeHTML(g.tc ? g.tc.label : "")} · ${Math.ceil(g.moves / 2)} moves${isFriend(g) ? " · <b>Friend</b>" : ""}${g.result ? " · finished" : ""}</span></span>
             </button>`).join("")
-          : `<p class="rv-muted">Nobody is playing on Chesshub right now. Start a game with Play → New Game → Play Online!</p>`}
+          : `<p class="rv-muted">Nobody is playing on Chesslab right now. Start a game with Play → New Game → Play Online!</p>`}
         <p class="rv-muted small-note">Want to see top players? Check the Lichess TV tab.</p>
       </div>`;
   },

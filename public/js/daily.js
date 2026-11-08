@@ -87,7 +87,7 @@ const Daily = {
   // ----- Nyt parti -----
 
   async invite(friendName, days, colorChoice) {
-    if (!Accounts.online()) return showToast(API.enabled ? "Log in to play Daily games" : "Daily chess needs the online version of Chesshub");
+    if (!Accounts.online()) return showToast(API.enabled ? "Log in to play Daily games" : "Daily chess needs the online version of Chesslab");
     try {
       const { game } = await API.post("/daily", { opponent: friendName, days, color: colorChoice });
       this.games.unshift(game);
@@ -235,7 +235,7 @@ const Daily = {
     const el = $("daily-content");
     if (!API.enabled) {
       el.innerHTML = `<div class="pz-scroll"><h2 class="pz-heading">Daily Chess</h2>
-        <p class="rv-muted">Daily chess uses the Chesshub server, so it only works on the online site (not when index.html is opened from a folder).</p></div>`;
+        <p class="rv-muted">Daily chess uses the Chesslab server, so it only works on the online site (not when index.html is opened from a folder).</p></div>`;
       return;
     }
     if (!Accounts.online()) {

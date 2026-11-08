@@ -21,7 +21,7 @@ const Matchmaking = {
   online: null,     // antal spillere online (fra serveren)
 
   async find(tc, variant = "chess") {
-    if (!API.enabled) return showToast("Play Online needs the online version of Chesshub");
+    if (!API.enabled) return showToast("Play Online needs the online version of Chesslab");
     if (!Accounts.online()) {
       openAuth("signup");
       return showToast("Create a free account (or log in) to play rated games online");

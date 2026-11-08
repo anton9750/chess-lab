@@ -112,7 +112,7 @@ const Explorer = {
 
   async fetch(fen) {
     if (this.source === "chesshub") {
-      if (!API.enabled) throw new Error("The Chesshub database needs the online version");
+      if (!API.enabled) throw new Error("The Chesslab database needs the online version");
       const { moves } = await API.get("/explorer?fen=" + encodeURIComponent(fen));
       return { moves };
     }
@@ -132,7 +132,7 @@ const Explorer = {
   },
 
   frameHTML(inner) {
-    const tabs = [["chesshub", "Chesshub"], ["masters", "Masters"], ["lichess", "Lichess"]];
+    const tabs = [["chesshub", "Chesslab"], ["masters", "Masters"], ["lichess", "Lichess"]];
     return `
       <div class="rv-section-title explorer-head">
         <span>Opening explorer</span>
@@ -150,7 +150,7 @@ const Explorer = {
     }
     if (r.error) return `<p class="rv-muted">${escapeHTML(r.error)}</p>`;
     if (!r.moves.length) {
-      return `<p class="rv-muted">${this.source === "chesshub" ? "No Chesshub games reached this position yet. (Only rated online games count.)" : "No games in this position."}</p>`;
+      return `<p class="rv-muted">${this.source === "chesshub" ? "No Chesslab games reached this position yet. (Only rated online games count.)" : "No games in this position."}</p>`;
     }
     const total = r.moves.reduce((s, m) => s + m.white + m.draws + m.black, 0);
     const pct = (n, all) => (all ? Math.round((n / all) * 100) : 0);

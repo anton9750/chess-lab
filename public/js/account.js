@@ -108,7 +108,7 @@ const AccountPage = {
         ${location.hash === "#admin" ? `
         <section class="social-card">
           <h2>Admin</h2>
-          <p class="rv-muted">For the owner of Chesshub: reset a friend's forgotten password, or delete an account.</p>
+          <p class="rv-muted">For the owner of Chesslab: reset a friend's forgotten password, or delete an account.</p>
           <form id="account-admin-form" class="account-form">
             <input type="password" id="admin-secret" class="friend-input" placeholder="Admin key" required>
             <input id="admin-user" class="friend-input" placeholder="Username" required>

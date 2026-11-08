@@ -114,7 +114,7 @@ const LeaderboardPage = {
             <span class="rv-muted lb-games">no ${this.category} games</span>
           </button>`).join("")}
       </div>
-      ${this.tab === "global" ? `<p class="rv-muted small-note">Everyone with the Chesshub link who has an account. A <b>?</b> means a provisional rating (only a few games played).</p>` : ""}`;
+      ${this.tab === "global" ? `<p class="rv-muted small-note">Everyone with the Chesslab link who has an account. A <b>?</b> means a provisional rating (only a few games played).</p>` : ""}`;
   },
 
   // Mine resultater mod hver bot

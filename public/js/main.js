@@ -623,7 +623,7 @@ async function showHint() {
   const engine = await engineFor(state.game);
   const result = engine ? await engine.search(fen, { skill: 20, movetime: 700 }) : null;
   $("btn-hint").disabled = false;
-  if (!engine) return showToast("Hints for variants need the online version of Chesshub");
+  if (!engine) return showToast("Hints for variants need the online version of Chesslab");
   // Stillingen kan have ændret sig, mens vi ventede
   if (!result || state.game.fen() !== fen) return;
   state.hintsUsed++;

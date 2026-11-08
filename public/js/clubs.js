@@ -86,7 +86,7 @@ const Clubs = {
   },
 
   listHTML() {
-    if (!API.enabled) return `<h1 class="content-title"><svg class="nav-icon"><use href="#i-social"/></svg>Clubs</h1><p class="rv-muted">Clubs need the online version of Chesshub.</p>`;
+    if (!API.enabled) return `<h1 class="content-title"><svg class="nav-icon"><use href="#i-social"/></svg>Clubs</h1><p class="rv-muted">Clubs need the online version of Chesslab.</p>`;
     const clubs = this.list || [];
     const mine = clubs.filter((c) => c.member);
     const others = clubs.filter((c) => !c.member).sort((a, b) => b.members - a.members);

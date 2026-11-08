@@ -231,8 +231,8 @@ const Tournaments = {
     if (t.joined && t.status === "live") {
       const p = t.myPairing;
       if (p) status = `<div class="tour-status playing">♟ Your game vs <b>${escapeHTML(p.white === me ? p.blackName : p.whiteName)}</b> – <a href="#" data-tour-play>go to the board</a></div>`;
-      else status = `<div class="tour-status"><span class="spinner"></span> Waiting for an opponent… (keep Chesshub open)</div>`;
-    } else if (t.joined && t.status === "upcoming") status = `<div class="tour-status">You're in! The tournament starts in ${this.when(t).replace("Starts in ", "")}. Keep Chesshub open.</div>`;
+      else status = `<div class="tour-status"><span class="spinner"></span> Waiting for an opponent… (keep Chesslab open)</div>`;
+    } else if (t.joined && t.status === "upcoming") status = `<div class="tour-status">You're in! The tournament starts in ${this.when(t).replace("Starts in ", "")}. Keep Chesslab open.</div>`;
 
     let button = "";
     if (t.status !== "finished" && Accounts.online()) {

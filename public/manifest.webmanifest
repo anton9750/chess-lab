@@ -1,6 +1,6 @@
 {
-  "name": "Chesshub",
-  "short_name": "Chesshub",
+  "name": "Chesslab",
+  "short_name": "Chesslab",
   "start_url": ".",
   "display": "standalone",
   "background_color": "#312e2b",

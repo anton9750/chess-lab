@@ -13,17 +13,17 @@ const NEWS = [
   { title: "Play Coach, Skills and a live eval bar", tag: "New feature",
     text: "Play → New Game → Play Coach: Coach Olive plays you at your level (New to Chess to Master), explains her moves and warns you about threats. Game Review now has a Next button for the key moments and Skill Points for good moves, and bot games show an evaluation bar." },
   { title: "Playing friends works on every network", tag: "Fix",
-    text: "If your network blocks direct connections (school wifi, mobile data), Play a Friend now sends the moves through the Chesshub server instead." },
-  { title: "Watch Chesshub games live", tag: "Watch",
-    text: "Every rated game on Chesshub can be watched live under Watch → Chesshub – including your friends' games and tournament games." },
+    text: "If your network blocks direct connections (school wifi, mobile data), Play a Friend now sends the moves through the Chesslab server instead." },
+  { title: "Watch Chesslab games live", tag: "Watch",
+    text: "Every rated game on Chesslab can be watched live under Watch → Chesslab – including your friends' games and tournament games." },
   { title: "5 million Lichess puzzles + opening explorer", tag: "Puzzles",
-    text: "Puzzles now come straight from the Lichess database, matched to your rating. The analysis board has an opening explorer with moves from Chesshub players – connect a Lichess account to also see master games." },
-  { title: "Install Chesshub as an app", tag: "New feature",
-    text: "Put Chesshub on your phone's home screen or your desktop: More → Install the app." },
+    text: "Puzzles now come straight from the Lichess database, matched to your rating. The analysis board has an opening explorer with moves from Chesslab players – connect a Lichess account to also see master games." },
+  { title: "Install Chesslab as an app", tag: "New feature",
+    text: "Put Chesslab on your phone's home screen or your desktop: More → Install the app." },
   { title: "Game Review is here", tag: "New feature",
     text: "Finished a game? Press Game Review and Coach Olive goes through every move with Stockfish. You get an accuracy score for both players, an evaluation graph and an explanation for every Brilliant move, Mistake and Blunder." },
   { title: "Play your friends online", tag: "New feature",
-    text: "Create a game under Play a Friend, send the 6-letter code to a friend, and play with clocks, chat, draw offers and rematches. Moves go directly between your browsers – or through the Chesshub server if your network blocks that." },
+    text: "Create a game under Play a Friend, send the 6-letter code to a friend, and play with clocks, chat, draw offers and rematches. Moves go directly between your browsers – or through the Chesslab server if your network blocks that." },
   { title: "Puzzle Streak and 50 puzzle themes", tag: "Puzzles",
     text: "Train with 3,000 puzzles from the open Lichess puzzle database. Pick a theme like Forks or Mate in 2, or try Puzzle Streak: puzzles get harder and harder, and one mistake ends the run." },
   { title: "Meet the bots", tag: "Play",
@@ -38,8 +38,8 @@ const NewsPage = {
   open() {
     $("content-page").innerHTML = `
       <div class="content-wrap">
-        <h1 class="content-title"><svg class="nav-icon icon-news"><use href="#i-news"/></svg>Chesshub News</h1>
-        <p class="rv-muted">Updates and new features on Chesshub.</p>
+        <h1 class="content-title"><svg class="nav-icon icon-news"><use href="#i-news"/></svg>Chesslab News</h1>
+        <p class="rv-muted">Updates and new features on Chesslab.</p>
         <div class="news-list">
           ${NEWS.map((n, i) => `
             <article class="news-card ${i === 0 ? "featured" : ""}">
@@ -249,7 +249,7 @@ function friendsHTML() {
           <button class="btn btn-gray btn-small" data-add-friend="${escapeHTML(r.name)}">Add friend</button>
         </div>`).join("")}` : ""}
 
-    <p class="rv-muted small-note">${Accounts.online() ? "Friend requests and messages are saved on the server, so friends get them even when they're offline. The green dot means a friend has Chesshub open right now." : "Friends can see you while you have Chesshub open. Requests and messages are delivered when your friend is online."}</p>`;
+    <p class="rv-muted small-note">${Accounts.online() ? "Friend requests and messages are saved on the server, so friends get them even when they're offline. The green dot means a friend has Chesslab open right now." : "Friends can see you while you have Chesslab open. Requests and messages are delivered when your friend is online."}</p>`;
 }
 
 // Chat med en ven
@@ -320,7 +320,7 @@ const MorePage = {
       ["rush", "i-clock", "Puzzle Rush", "Solve as many puzzles as you can, fast"],
       ["tournaments", "i-trophy", "Tournaments", "Arena tournaments – join or create one"],
       ["clubs", "i-social", "Clubs", "Join a club or start your own"],
-      ["install", "i-pawn", "Install the app", "Put Chesshub on your phone or desktop"],
+      ["install", "i-pawn", "Install the app", "Put Chesslab on your phone or desktop"],
       ["insights", "i-chart", "Insights", "Stats, accuracy and openings from your games"],
       ["leaderboard", "i-trophy", "Leaderboard", "Compare ratings with your friends"],
       ["bots", "i-robot", "Play Bots", "10 computer opponents"],
@@ -328,7 +328,7 @@ const MorePage = {
       ["account", "i-settings", "Account settings", "Profile, flag, password and more"],
       ["settings", "i-settings", "Board settings", "Board, pieces and sounds"],
       ["help", "i-help", "Help", "How everything works"],
-      ["credits", "i-learn", "Credits", "Open-source parts used in Chesshub"],
+      ["credits", "i-learn", "Credits", "Open-source parts used in Chesslab"],
     ];
     $("content-page").innerHTML = `
       <div class="content-wrap">
@@ -360,7 +360,7 @@ const MorePage = {
         <h1 class="content-title">Credits</h1>
         <div class="social-card credits">
           <p><b>chess.js</b> – chess rules. BSD 2-Clause license.</p>
-          <p><b>Stockfish 19</b> (WebAssembly port by Nathan Rugg) – the engine behind bots, hints, Game Review and analysis on the online site. <b>Stockfish 10</b> is used when Chesshub is opened from a folder. GPLv3.</p>
+          <p><b>Stockfish 19</b> (WebAssembly port by Nathan Rugg) – the engine behind bots, hints, Game Review and analysis on the online site. <b>Stockfish 10</b> is used when Chesslab is opened from a folder. GPLv3.</p>
           <p><b>PeerJS</b> – online play between browsers. MIT license.</p>
           <p><b>Lichess puzzle database</b> – 3,000 puzzles, CC0 (public domain).</p>
           <p><b>Lichess TV</b> – live games from the open Lichess API.</p>
@@ -385,13 +385,13 @@ const HelpPage = {
       ["How do I move a piece?", "Drag it with the mouse, or click the piece and then click the square you want. Dots show the legal moves, rings show captures."],
       ["How do I draw arrows?", "Right-click a square to mark it red. Right-click and drag to draw an arrow. A normal left click clears everything."],
       ["How do I play against the computer?", "Go to Play → New Game → Play Bots. Pick a bot, choose your color and press Play. Turn on the Coach for tips after every move."],
-      ["How do I play a rated game online?", "Log in, go to Play → New Game, keep Play Online selected, choose a time and press Play. Chesshub finds a player with the same time control and a rating close to yours. You can abort before both players have moved – then the game doesn't count."],
+      ["How do I play a rated game online?", "Log in, go to Play → New Game, keep Play Online selected, choose a time and press Play. Chesslab finds a player with the same time control and a rating close to yours. You can abort before both players have moved – then the game doesn't count."],
       ["How do I play with a friend online?", "Add them as a friend on the Social page and press Challenge – pick a live game, a Daily game (days per move) or a Puzzle Battle. You can also go to Play → Play a Friend and share a 6-letter code."],
-      ["How does the rating work?", "Like chess.com, Chesshub uses the Glicko system. Everyone starts at 1200. New players' ratings move a lot (shown with a ? on the Leaderboard); after more games they settle down. Bullet, Blitz, Rapid and Daily each have their own rating."],
+      ["How does the rating work?", "Like chess.com, Chesslab uses the Glicko system. Everyone starts at 1200. New players' ratings move a lot (shown with a ? on the Leaderboard); after more games they settle down. Bullet, Blitz, Rapid and Daily each have their own rating."],
       ["How strong are the bots?", "The ratings are measured: Stockfish 19 plays the strong bots at its officially calibrated strength (UCI_Elo, 1320–3190), and the weaker bots were tested in hundreds of games against those levels. On the online site the bots use Stockfish 19; opened from a folder they use the older Stockfish 10."],
       ["What is Game Review?", "After a game, press Game Review. Stockfish checks every move, and the coach explains what was good and what was a mistake. Your games are saved under Play → Games."],
       ["How does the puzzle rating work?", "Every puzzle has a rating. Solve it without mistakes and your rating goes up; make a mistake and it goes down. Harder puzzles give more points."],
-      ["Where are my account and games saved?", "On the Chesshub server, so you can log in from any device. Your password is stored safely (hashed), never as plain text. Guests (not logged in) are only saved in this browser."],
+      ["Where are my account and games saved?", "On the Chesslab server, so you can log in from any device. Your password is stored safely (hashed), never as plain text. Guests (not logged in) are only saved in this browser."],
       ["Online play doesn't connect. What can I do?", "Check your internet connection. Some school or work networks block direct connections between browsers – try another network, like a phone hotspot."],
     ];
     const keys = [["← / →", "Previous / next move"], ["↑ / ↓", "First / last move"], ["Esc", "Close windows"], ["Right-click", "Mark a square"], ["Right-drag", "Draw an arrow"]];
@@ -639,7 +639,7 @@ $("auth-form").addEventListener("submit", async (e) => {
     return;
   }
   closeAuth();
-  showToast(authMode === "signup" ? `Welcome to Chesshub, ${Accounts.name()}!` : `Welcome back, ${Accounts.name()}!`);
+  showToast(authMode === "signup" ? `Welcome to Chesslab, ${Accounts.name()}!` : `Welcome back, ${Accounts.name()}!`);
   afterAuthChange();
 });
 
@@ -908,7 +908,7 @@ async function installApp() {
   } else {
     showToast(/iPhone|iPad/.test(navigator.userAgent)
       ? "On iPhone/iPad: press Share, then \"Add to Home Screen\""
-      : "Use your browser's menu → \"Install Chesshub\" or \"Add to Home screen\"");
+      : "Use your browser's menu → \"Install Chesslab\" or \"Add to Home screen\"");
   }
 }
 if ("serviceWorker" in navigator && API.enabled) {
