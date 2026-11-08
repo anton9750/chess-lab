@@ -1,0 +1,9 @@
+{
+  "name": "Chesshub",
+  "short_name": "Chesshub",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#312e2b",
+  "theme_color": "#262522",
+  "icons": [{ "src": "img/app/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }]
+}

@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Play Chess - Chesshub</title>
+  <link rel="icon" href="img/app/icon.svg" type="image/svg+xml">
+  <!-- Kan installeres som en app (telefon og computer) -->
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="theme-color" content="#262522">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <link rel="stylesheet" href="/src/style.css">
+  <!-- Bed søgemaskiner (fx Google) om IKKE at vise siden -->
+  <meta name="robots" content="noindex, nofollow">
+</head>
+<body>
+
+  <!-- Låseskærm: kun folk med Kristians invitationslink kommer ind (se js/gate.js) -->
+  <div class="gate hidden" id="gate">
+    <div class="gate-card">
+      <span class="logo-mark gate-logo"><svg><use href="#i-pawn"/></svg></span>
+      <h1>Chess<b>hub</b></h1>
+      <p id="gate-message">Chesshub is invite-only.</p>
+      <span class="gate-lock">🔒 Friends only</span>
+      <!-- Har man allerede en konto, kan man altid logge ind herfra -->
+      <form class="gate-form" id="gate-login-form">
+        <b>Already have an account?</b>
+        <input id="gate-user" placeholder="Username" autocomplete="username" required>
+        <input id="gate-pass" type="password" placeholder="Password" autocomplete="current-password" required>
+        <button class="btn btn-green">Log In</button>
+      </form>
+      <form class="gate-form" id="gate-key-form">
+        <b>Got an invite link?</b>
+        <input id="gate-key-input" placeholder="Paste the invite link here" required>
+        <button class="btn btn-gray">Enter</button>
+      </form>
+      <p class="gate-error" id="gate-error"></p>
+    </div>
+  </div>
+
+  <!-- ===== Ikoner. Hvert ikon er et <symbol>, som bruges med <use href="#navn"> ===== -->
+  <svg class="sprite" xmlns="http://www.w3.org/2000/svg">
+    <symbol id="i-pawn" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2.5a3.5 3.5 0 0 0-2.2 6.2C8.6 9.5 8 10.6 8 12h8c0-1.4-.6-2.5-1.8-3.3A3.5 3.5 0 0 0 12 2.5ZM9 13.5c0 2.3-.9 4.2-2.6 5.5h11.2c-1.7-1.3-2.6-3.2-2.6-5.5H9ZM5 20.5h14V22H5z"/></symbol>
+    <symbol id="i-puzzle" viewBox="0 0 24 24"><path fill="currentColor" d="M10 3a2.5 2.5 0 0 1 5 0v1h4a1 1 0 0 1 1 1v4h-1a2.5 2.5 0 0 0 0 5h1v4a1 1 0 0 1-1 1h-4v-1a2.5 2.5 0 0 0-5 0v1H6a1 1 0 0 1-1-1v-4H4a2.5 2.5 0 0 1 0-5h1V5a1 1 0 0 1 1-1h4V3Z"/></symbol>
+    <symbol id="i-learn" viewBox="0 0 24 24"><path fill="currentColor" d="M12 3 1 8.5 12 14l9-4.5V16h2V8.5L12 3ZM5 12.2V16c0 1.9 3.1 3.5 7 3.5s7-1.6 7-3.5v-3.8L12 15.7l-7-3.5Z"/></symbol>
+    <symbol id="i-watch" viewBox="0 0 24 24"><path fill="currentColor" d="M3 4h18a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1h-7v2h3v2H7v-2h3v-2H3a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1Zm7 3.5v7l6-3.5-6-3.5Z"/></symbol>
+    <symbol id="i-news" viewBox="0 0 24 24"><path fill="currentColor" d="M4 3h13a1 1 0 0 1 1 1v15a2 2 0 0 0 2 2H5a3 3 0 0 1-3-3V5a2 2 0 0 1 2-2Zm2 4v4h5V7H6Zm7 0v2h3V7h-3Zm0 3v1h3v-1h-3Zm-7 3v1.5h10V13H6Zm0 3v1.5h10V16H6Zm14-9h2v12a2 2 0 0 1-2 2V7Z"/></symbol>
+    <symbol id="i-social" viewBox="0 0 24 24"><path fill="currentColor" d="M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm8 0a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM1 20c0-3.9 3.6-7 8-7s8 3.1 8 7v1H1v-1Zm17 1v-1c0-2.2-.8-4.2-2.2-5.6.4-.1.8-.1 1.2-.1 3.3 0 6 2.4 6 5.4V21h-5Z"/></symbol>
+    <symbol id="i-more" viewBox="0 0 24 24"><circle cx="5" cy="12" r="2.2" fill="currentColor"/><circle cx="12" cy="12" r="2.2" fill="currentColor"/><circle cx="19" cy="12" r="2.2" fill="currentColor"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5" fill="none" stroke="currentColor" stroke-width="2.5"/><path d="m15.5 15.5 5.5 5.5" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"/></symbol>
+    <symbol id="i-settings" viewBox="0 0 24 24"><circle cx="12" cy="12" r="7" fill="none" stroke="currentColor" stroke-width="4" stroke-dasharray="3.66 1.83"/><circle cx="12" cy="12" r="5.3" fill="none" stroke="currentColor" stroke-width="2.2"/></symbol>
+    <symbol id="i-help" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M9.3 9.4a2.8 2.8 0 1 1 3.9 2.6c-.8.4-1.2 1-1.2 1.8v.7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><circle cx="12" cy="17.3" r="1.3" fill="currentColor"/></symbol>
+    <symbol id="i-collapse" viewBox="0 0 24 24"><path d="m11 6-6 6 6 6M19 6l-6 6 6 6" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-flag" viewBox="0 0 24 24"><path fill="currentColor" d="M5 2h2v20H5zM8 3h11l-2.5 4.5L19 12H8z"/></symbol>
+    <symbol id="i-first" viewBox="0 0 24 24"><path fill="currentColor" d="M5 5h2.5v14H5zM19 5v14l-10-7z"/></symbol>
+    <symbol id="i-prev" viewBox="0 0 24 24"><path fill="currentColor" d="M16 5v14L6 12z"/></symbol>
+    <symbol id="i-next" viewBox="0 0 24 24"><path fill="currentColor" d="M8 5v14l10-7z"/></symbol>
+    <symbol id="i-last" viewBox="0 0 24 24"><path fill="currentColor" d="M16.5 5H19v14h-2.5zM5 5v14l10-7z"/></symbol>
+    <symbol id="i-flip" viewBox="0 0 24 24"><path d="M7 20V5M3.5 8.5 7 5l3.5 3.5M17 4v15m3.5-3.5L17 19l-3.5-3.5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-takeback" viewBox="0 0 24 24"><path d="M9 14 4 9l5-5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 9h10a6 6 0 0 1 0 12h-3" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2.4"/><path d="M12 7v5l3.5 2" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></symbol>
+    <symbol id="i-chart" viewBox="0 0 24 24"><path fill="currentColor" d="M3 3h2v16h16v2H3V3Zm4 10h3v5H7v-5Zm5-5h3v10h-3V8Zm5 3h3v7h-3v-7Z"/></symbol>
+    <symbol id="i-storm" viewBox="0 0 24 24"><path fill="currentColor" d="M7 15a5 5 0 1 1 1.1-9.9A6 6 0 0 1 19.5 8 3.5 3.5 0 0 1 19 15h-3.4l-2.1-2H17l-6 8 1.5-6H9.2L11 10H7.4L7 15Z"/></symbol>
+    <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4.5" fill="currentColor"/><path d="M12 1.5v3M12 19.5v3M1.5 12h3M19.5 12h3M4.6 4.6l2.1 2.1M17.3 17.3l2.1 2.1M4.6 19.4l2.1-2.1M17.3 6.7l2.1-2.1" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></symbol>
+    <symbol id="i-bolt" viewBox="0 0 24 24"><path fill="currentColor" d="M13.5 2 4 14h6.5L9 22l11-13h-7z"/></symbol>
+    <symbol id="i-bullet" viewBox="0 0 24 24"><path fill="currentColor" d="M3 9h11c4 0 7 1.5 7 3s-3 3-7 3H3z"/><path fill="currentColor" d="M1 9h1.2v6H1z"/></symbol>
+    <symbol id="i-infinity" viewBox="0 0 24 24"><path d="M12 12c-2-2.7-3.6-4-5.5-4a4 4 0 0 0 0 8c1.9 0 3.5-1.3 5.5-4Zm0 0c2 2.7 3.6 4 5.5 4a4 4 0 0 0 0-8c-1.9 0-3.5 1.3-5.5 4Z" fill="none" stroke="currentColor" stroke-width="2.4"/></symbol>
+    <symbol id="i-book" viewBox="0 0 24 24"><path fill="currentColor" d="M4 4.5C6.5 3.5 9.5 3.5 11 5v15c-1.5-1.5-4.5-1.5-7-.5v-15Zm16 0c-2.5-1-5.5-1-7 .5v15c1.5-1.5 4.5-1.5 7-.5v-15Z"/></symbol>
+    <symbol id="i-close" viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-trophy" viewBox="0 0 24 24"><path fill="currentColor" d="M7 3h10v2h4v3a4 4 0 0 1-4 4h-.4A5 5 0 0 1 13 15.9V18h3v3H8v-3h3v-2.1A5 5 0 0 1 7.4 12H7a4 4 0 0 1-4-4V5h4V3Zm0 4H5v1a2 2 0 0 0 2 2V7Zm10 0v3a2 2 0 0 0 2-2V7h-2Z"/></symbol>
+    <symbol id="i-handshake" viewBox="0 0 24 24"><path fill="currentColor" d="M2 7h4l3-2h4l-4 3.5c-.6.6-.3 1.6.6 1.6.3 0 .6-.1.8-.3L13 8h2l5 5-1.5 1.5-1-1-.8.8-1-1-.8.8-1-1-.8.8L9 9.9l-1 1 4.4 4.4L11 16.7 6 12H2V7Zm16.5 0H22v5h-1.5L16 7.5h2.5Z"/></symbol>
+    <symbol id="i-chevron" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-robot" viewBox="0 0 24 24"><path fill="currentColor" d="M11 2h2v3h5a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h5V2ZM8.5 9.5a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3Zm7 0a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3ZM8 15v1.5h8V15H8ZM1 10h2v5H1zm20 0h2v5h-2zM7 20h10v2H7z"/></symbol>
+    <symbol id="i-friend" viewBox="0 0 24 24"><path fill="currentColor" d="M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM1 20c0-3.9 3.6-7 8-7s8 3.1 8 7v1H1v-1ZM19 7h2v3h3v2h-3v3h-2v-3h-3v-2h3V7Z"/></symbol>
+    <symbol id="i-bulb" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2a7 7 0 0 0-4 12.7V17h8v-2.3A7 7 0 0 0 12 2ZM9 18.5h6V20a2 2 0 0 1-2 2h-2a2 2 0 0 1-2-2v-1.5Z"/></symbol>
+    <symbol id="i-back" viewBox="0 0 24 24"><path d="M15 5 8 12l7 7" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-random" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2a10 10 0 1 0 0 20V2Z"/><circle cx="12" cy="12" r="9.2" fill="none" stroke="currentColor" stroke-width="1.6"/></symbol>
+    <symbol id="i-swap" viewBox="0 0 24 24"><path d="M4 8h14m-3.5-3.5L18 8l-3.5 3.5M20 16H6m3.5-3.5L6 16l3.5 3.5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  </svg>
+
+  <!-- ===================================================================
+       Venstre menu
+       =================================================================== -->
+  <nav class="sidebar" id="sidebar">
+    <a class='logo' href='/' title='Chesshub'>
+      <span class="logo-mark"><svg><use href="#i-pawn"/></svg></span>
+      <span class="logo-text">Chess<b>hub</b></span>
+    </a>
+
+    <ul class="nav-list">
+      <li class="nav-li">
+        <a class="nav-item active" data-nav="play" href="#"><svg class="nav-icon "><use href="#i-pawn"/></svg><span class="nav-label">Play</span></a>
+        <!-- Menu der vises, når musen holdes over punktet -->
+        <div class="flyout">
+          <div class="flyout-title">Play</div>
+          <button class="flyout-item" data-go="play"><svg><use href="#i-pawn"/></svg>Play</button>
+          <button class="flyout-item" data-go="new"><svg><use href="#i-clock"/></svg>New Game</button>
+          <button class="flyout-item" data-go="bots"><svg><use href="#i-robot"/></svg>Play Bots</button>
+          <button class="flyout-item" data-go="coach"><svg><use href="#i-learn"/></svg>Play Coach</button>
+          <button class="flyout-item" data-go="friend"><svg><use href="#i-friend"/></svg>Play a Friend</button>
+          <button class="flyout-item" data-go="daily-chess"><svg><use href="#i-sun"/></svg>Daily Chess</button>
+          <button class="flyout-item" data-go="tournaments"><svg><use href="#i-trophy"/></svg>Tournaments</button>
+          <button class="flyout-item" data-go="history"><svg><use href="#i-book"/></svg>Game History</button>
+        </div>
+      </li>
+      <li class="nav-li">
+        <a class="nav-item" data-nav="puzzles" href="#"><svg class="nav-icon icon-puzzle"><use href="#i-puzzle"/></svg><span class="nav-label">Puzzles</span></a>
+        <!-- Menu der vises, når musen holdes over punktet -->
+        <div class="flyout">
+          <div class="flyout-title">Puzzles</div>
+          <button class="flyout-item" data-go="puzzles"><svg><use href="#i-puzzle"/></svg>Puzzles</button>
+          <button class="flyout-item" data-go="daily"><svg><use href="#i-clock"/></svg>Daily Puzzle</button>
+          <button class="flyout-item" data-go="rush"><svg><use href="#i-clock"/></svg>Puzzle Rush</button>
+          <button class="flyout-item" data-go="streak"><svg><use href="#i-bolt"/></svg>Puzzle Streak</button>
+          <button class="flyout-item" data-go="themes"><svg><use href="#i-book"/></svg>Puzzle Themes</button>
+        </div>
+      </li>
+      <li class="nav-li">
+        <a class="nav-item" data-nav="learn" href="#"><svg class="nav-icon icon-learn"><use href="#i-learn"/></svg><span class="nav-label">Learn</span></a>
+        <!-- Menu der vises, når musen holdes over punktet -->
+        <div class="flyout">
+          <div class="flyout-title">Learn</div>
+          <button class="flyout-item" data-go="lessons"><svg><use href="#i-learn"/></svg>Lessons</button>
+          <button class="flyout-item" data-go="analysis"><svg><use href="#i-search"/></svg>Analysis</button>
+          <button class="flyout-item" data-go="review"><svg><use href="#i-trophy"/></svg>Game Review</button>
+          <button class="flyout-item" data-go="openings"><svg><use href="#i-book"/></svg>Openings</button>
+        </div>
+      </li>
+      <li class="nav-li">
+        <a class="nav-item" data-nav="watch" href="#"><svg class="nav-icon icon-watch"><use href="#i-watch"/></svg><span class="nav-label">Watch</span></a>
+        <!-- Menu der vises, når musen holdes over punktet -->
+        <div class="flyout">
+          <div class="flyout-title">Watch</div>
+          <button class="flyout-item" data-go="tv"><svg><use href="#i-watch"/></svg>Live TV</button>
+          <button class="flyout-item" data-go="famous"><svg><use href="#i-trophy"/></svg>Famous Games</button>
+        </div>
+      </li>
+      <li class="nav-li">
+        <a class="nav-item" data-nav="news" href="#"><svg class="nav-icon icon-news"><use href="#i-news"/></svg><span class="nav-label">News</span></a>
+        <!-- Menu der vises, når musen holdes over punktet -->
+        <div class="flyout">
+          <div class="flyout-title">News</div>
+          <button class="flyout-item" data-go="news"><svg><use href="#i-news"/></svg>News</button>
+        </div>
+      </li>
+      <li class="nav-li">
+        <a class="nav-item" data-nav="social" href="#"><svg class="nav-icon icon-social"><use href="#i-social"/></svg><span class="nav-label">Social</span></a>
+        <!-- Menu der vises, når musen holdes over punktet -->
+        <div class="flyout">
+          <div class="flyout-title">Social</div>
+          <button class="flyout-item" data-go="profile"><svg><use href="#i-social"/></svg>Profile</button>
+          <button class="flyout-item" data-go="friends"><svg><use href="#i-friend"/></svg>Friends</button>
+          <button class="flyout-item" data-go="clubs"><svg><use href="#i-social"/></svg>Clubs</button>
+          <button class="flyout-item" data-go="insights"><svg><use href="#i-chart"/></svg>Insights</button>
+          <button class="flyout-item" data-go="leaderboard"><svg><use href="#i-trophy"/></svg>Leaderboard</button>
+          <button class="flyout-item" data-go="history"><svg><use href="#i-book"/></svg>Game History</button>
+        </div>
+      </li>
+      <li class="nav-li">
+        <a class="nav-item" data-nav="more" href="#"><svg class="nav-icon "><use href="#i-more"/></svg><span class="nav-label">More</span></a>
+        <!-- Menu der vises, når musen holdes over punktet -->
+        <div class="flyout">
+          <div class="flyout-title">More</div>
+          <button class="flyout-item" data-go="more"><svg><use href="#i-more"/></svg>More</button>
+          <button class="flyout-item" data-go="settings"><svg><use href="#i-settings"/></svg>Settings</button>
+          <button class="flyout-item" data-go="help"><svg><use href="#i-help"/></svg>Help</button>
+          <button class="flyout-item" data-go="credits"><svg><use href="#i-learn"/></svg>Credits</button>
+        </div>
+      </li>
+    </ul>
+
+    <div class="sidebar-search">
+      <svg><use href="#i-search"/></svg>
+      <input type="text" id="search-input" placeholder="Search" aria-label="Search" autocomplete="off">
+      <!-- Søgeresultater (fyldes ud af pages.js) -->
+      <div class="search-results hidden" id="search-results"></div>
+    </div>
+
+    <!-- Sign Up / Log In – eller brugerens navn når man er logget ind -->
+    <div class="sidebar-auth" id="sidebar-auth"></div>
+
+    <div class="sidebar-bottom">
+      <a class="nav-item small" data-action="collapse" href="#"><svg class="nav-icon"><use href="#i-collapse"/></svg><span class="nav-label">Collapse</span></a>
+      <a class="nav-item small" data-action="settings" href="#"><svg class="nav-icon"><use href="#i-settings"/></svg><span class="nav-label">Settings</span></a>
+      <a class="nav-item small" data-action="help" href="#"><svg class="nav-icon"><use href="#i-help"/></svg><span class="nav-label">Help</span></a>
+    </div>
+  </nav>
+
+  <!-- ===================================================================
+       Spil: bræt i midten, panel til højre
+       =================================================================== -->
+  <main class="game-layout" id="game-layout">
+
+    <section class="board-column">
+      <!-- Spilleren øverst (normalt sort). Fyldes ud af JavaScript. -->
+      <div class="player-bar" id="player-top"></div>
+
+      <!-- Evalueringsbjælke (vises i Game Review og på analysebrættet) -->
+      <div class="eval-bar hidden" id="eval-bar">
+        <div class="eval-fill" id="eval-fill"></div>
+        <span class="eval-text" id="eval-text"></span>
+      </div>
+
+      <div class="board-wrap" id="board-wrap">
+        <div class="board" id="board"></div>
+        <!-- Lag til pile (højreklik og træk) -->
+        <svg class="arrows" id="arrows" viewBox="0 0 8 8"></svg>
+
+        <!-- Vindue når partiet er slut -->
+        <div class="game-over hidden" id="game-over">
+          <div class="game-over-card">
+            <button class="game-over-close" id="btn-close-over" title="Close"><svg><use href="#i-close"/></svg></button>
+            <div class="game-over-header">
+              <svg class="game-over-trophy"><use href="#i-trophy"/></svg>
+              <div>
+                <h2 id="game-over-title">White Won</h2>
+                <p id="game-over-reason">by checkmate</p>
+              </div>
+            </div>
+            <div class="game-over-players" id="game-over-players"></div>
+            <div class="game-over-rating" id="game-over-rating"></div>
+            <div class="game-over-review">
+              <button class="btn btn-green btn-huge" id="btn-review-game"><svg><use href="#i-trophy"/></svg>Game Review</button>
+            </div>
+            <div class="game-over-buttons">
+              <button class="btn btn-gray" id="btn-rematch">Rematch</button>
+              <button class="btn btn-gray" id="btn-new-from-over">New Game</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Spilleren nederst (normalt hvid) -->
+      <div class="player-bar" id="player-bottom"></div>
+    </section>
+
+    <!-- ===== Højre panel ===== -->
+    <aside class="panel page-panel" data-page="play">
+      <div class="panel-tabs">
+        <button class="tab active" data-tab="play"><svg><use href="#i-pawn"/></svg>Play</button>
+        <button class="tab" data-tab="new"><svg><use href="#i-friend"/></svg>New Game</button>
+        <button class="tab" data-tab="games"><svg><use href="#i-book"/></svg>Games</button>
+      </div>
+
+      <!-- Fanen "Play": det igangværende parti -->
+      <div class="tab-content" id="tab-play">
+        <!-- Coachen taler her under "Play Coach" (fyldes ud af coach.js) -->
+        <div class="coach-box hidden" id="coach-box"></div>
+        <div class="opening" id="opening">
+          <svg><use href="#i-book"/></svg><span id="opening-name">Starting Position</span>
+        </div>
+
+        <!-- Træklisten -->
+        <div class="move-list" id="move-list"></div>
+
+        <!-- Vises når en spiller tilbyder remis -->
+        <div class="offer-bar hidden" id="offer-bar">
+          <span id="offer-text">White offers a draw</span>
+          <button class="btn btn-green btn-small" id="btn-accept-draw">Accept</button>
+          <button class="btn btn-gray btn-small" id="btn-decline-draw">Decline</button>
+          <button class="btn btn-green btn-small hidden" id="btn-claim-win">Claim win</button>
+        </div>
+
+        <!-- Knapper under træklisten -->
+        <div class="controls">
+          <div class="controls-game" id="controls-live">
+            <button class="ctrl-btn" id="btn-draw" title="Offer draw"><span class="half">½</span><span>Draw</span></button>
+            <button class="ctrl-btn" id="btn-resign" title="Resign"><svg><use href="#i-flag"/></svg><span>Resign</span></button>
+            <button class="ctrl-btn hint-btn hidden" id="btn-hint" title="Show the best move"><svg><use href="#i-bulb"/></svg><span>Hint</span></button>
+            <button class="ctrl-btn icon-only" id="btn-takeback" title="Takeback"><svg><use href="#i-takeback"/></svg></button>
+          </div>
+          <div class="controls-game hidden" id="controls-over">
+            <button class="btn btn-green btn-small" id="btn-new-after">New Game</button>
+            <button class="btn btn-gray btn-small" id="btn-rematch-after">Rematch</button>
+            <button class="btn btn-gray btn-small" id="btn-review-after">Game Review</button>
+          </div>
+          <div class="controls-nav">
+            <button class="nav-btn" id="btn-first" title="First move"><svg><use href="#i-first"/></svg></button>
+            <button class="nav-btn" id="btn-prev" title="Previous move (←)"><svg><use href="#i-prev"/></svg></button>
+            <button class="nav-btn" id="btn-next" title="Next move (→)"><svg><use href="#i-next"/></svg></button>
+            <button class="nav-btn" id="btn-last" title="Last move"><svg><use href="#i-last"/></svg></button>
+            <button class="nav-btn" id="btn-flip" title="Flip board"><svg><use href="#i-flip"/></svg></button>
+            <button class="nav-btn" id="btn-settings" title="Settings"><svg><use href="#i-settings"/></svg></button>
+          </div>
+        </div>
+
+        <!-- Beskeder om partiet (ligesom chatten på de store sider) -->
+        <div class="game-log" id="game-log"></div>
+        <!-- Chat (kun når man spiller online mod en ven) -->
+        <form class="chat-form hidden" id="chat-form">
+          <input type="text" id="chat-input" placeholder="Send a message…" maxlength="200" autocomplete="off">
+          <button class="btn btn-gray btn-small">Send</button>
+        </form>
+      </div>
+
+      <!-- Fanen "New Game": vælg tid og spilletype -->
+      <div class="tab-content hidden" id="tab-new">
+        <!-- Vises mens "Play Online" søger efter en modstander -->
+        <div id="mm-box"></div>
+        <button class="tc-toggle" id="tc-toggle">
+          <svg class="tc-icon" id="tc-toggle-icon"><use href="#i-clock"/></svg>
+          <span id="tc-toggle-label">10 min (Rapid)</span>
+          <svg class="tc-chevron"><use href="#i-chevron"/></svg>
+        </button>
+        <div class="tc-grid hidden" id="tc-grid"></div>
+
+        <!-- Variant: Standard, Chess960, Crazyhouse … (se js/variants.js) -->
+        <label class="variant-row">
+          <span>Variant</span>
+          <select class="pz-select" id="variant-select"></select>
+        </label>
+        <p class="variant-desc rv-muted" id="variant-desc"></p>
+
+        <div class="mode-list" id="mode-list"></div>
+
+        <!-- Start fra en selvvalgt stilling -->
+        <div class="custom-pos">
+          <label class="toggle-row">
+            <span>Start from a custom position</span>
+            <input type="checkbox" id="custom-pos-toggle">
+            <span class="switch"></span>
+          </label>
+          <input class="friend-input hidden" id="custom-fen" placeholder="Paste a FEN, e.g. 8/8/8/4k3/8/8/8/4K2Q w - - 0 1" autocomplete="off">
+        </div>
+
+        <button class="btn btn-green btn-huge" id="btn-start">Start Game</button>
+      </div>
+
+      <!-- "Play Bots": vælg en computer-modstander -->
+      <div class="tab-content hidden" id="tab-bots">
+        <div class="bots-header">
+          <button class="bots-back" id="btn-bots-back" title="Back"><svg><use href="#i-back"/></svg></button>
+          <svg class="bots-header-icon"><use href="#i-robot"/></svg>
+          <h2>Play Bots</h2>
+        </div>
+
+        <!-- Den valgte bot (stort billede og replik) -->
+        <div class="bot-hero" id="bot-hero"></div>
+
+        <!-- Alle bots -->
+        <div class="bot-groups" id="bot-groups"></div>
+
+        <div class="bots-footer">
+          <div class="bot-custom-pos hidden" id="bot-custom-pos">♟ Starting from a custom position</div>
+          <div class="bot-custom-pos hidden" id="bot-variant-note"></div>
+          <label class="toggle-row coach-toggle">
+            <span><b>🦉 Coach</b> – tips after every move</span>
+            <input type="checkbox" id="bot-coach">
+            <span class="switch"></span>
+          </label>
+          <div class="color-choice">
+            <span class="color-label">I play as</span>
+            <button class="color-btn" data-color="w" title="White"><img src="img/pieces/cburnett/wK.svg" alt="White"></button>
+            <button class="color-btn" data-color="random" title="Random"><svg><use href="#i-random"/></svg></button>
+            <button class="color-btn" data-color="b" title="Black"><img src="img/pieces/cburnett/bK.svg" alt="Black"></button>
+          </div>
+          <button class="btn btn-green btn-huge" id="btn-play-bot">Play</button>
+        </div>
+      </div>
+
+      <!-- "Play Coach": spil mod coachen, som forklarer undervejs (coach.js) -->
+      <div class="tab-content hidden" id="tab-coach">
+        <div class="bots-header">
+          <button class="bots-back" onclick="switchTab('new')" title="Back"><svg><use href="#i-back"/></svg></button>
+          <svg class="bots-header-icon"><use href="#i-learn"/></svg>
+          <h2>Play Coach</h2>
+        </div>
+        <div class="tab-content" id="coach-content"></div>
+      </div>
+
+      <!-- "Play a Friend": online mod en ven (fyldes ud af online.js) -->
+      <div class="tab-content hidden" id="tab-friend">
+        <div class="bots-header">
+          <button class="bots-back" onclick="switchTab('new')" title="Back"><svg><use href="#i-back"/></svg></button>
+          <svg class="bots-header-icon"><use href="#i-friend"/></svg>
+          <h2>Play a Friend</h2>
+        </div>
+        <div class="tab-content" id="friend-content"></div>
+      </div>
+
+      <!-- "Games": arkiv over spillede partier -->
+      <div class="tab-content hidden" id="tab-games"></div>
+    </aside>
+    <!-- ===== Puzzle-panelet (vises i stedet for spil-panelet på puzzle-siden) ===== -->
+    <aside class="panel puzzle-panel page-panel hidden" data-page="puzzles" id="puzzle-panel">
+      <div class="panel-tabs">
+        <button class="tab active" data-ptab="train"><svg><use href="#i-puzzle"/></svg>Puzzles</button>
+        <button class="tab" data-ptab="themes"><svg><use href="#i-book"/></svg>Themes</button>
+        <button class="tab" data-ptab="rush"><svg><use href="#i-clock"/></svg>Rush</button>
+        <button class="tab" data-ptab="storm"><svg><use href="#i-storm"/></svg>Storm</button>
+        <button class="tab" data-ptab="streak"><svg><use href="#i-bolt"/></svg>Streak</button>
+        <button class="tab" data-ptab="dashboard"><svg><use href="#i-chart"/></svg>Dashboard</button>
+      </div>
+      <div class="tab-content" id="pz-train"></div>
+      <div class="tab-content hidden" id="pz-themes"></div>
+      <div class="tab-content hidden" id="pz-streak"></div>
+      <div class="tab-content hidden" id="pz-rush"></div>
+      <div class="tab-content hidden" id="pz-dashboard"></div>
+      <div class="tab-content hidden" id="pz-storm"></div>
+    </aside>
+
+    <!-- ===== Daily chess (langsomme partier mod venner) ===== -->
+    <aside class="panel page-panel hidden" data-page="daily" id="daily-panel">
+      <div class="panel-tabs"><span class="tab active"><svg><use href="#i-sun"/></svg>Daily Chess</span></div>
+      <div class="tab-content" id="daily-content"></div>
+    </aside>
+
+    <!-- ===== Learn ===== -->
+    <aside class="panel page-panel hidden" data-page="learn" id="learn-panel">
+      <div class="panel-tabs"><span class="tab active"><svg><use href="#i-learn"/></svg>Learn</span></div>
+      <div class="tab-content" id="learn-content"></div>
+    </aside>
+
+    <!-- ===== Watch ===== -->
+    <aside class="panel page-panel hidden" data-page="watch" id="watch-panel">
+      <div class="panel-tabs">
+        <button class="tab active" data-wtab="chesshub"><svg><use href="#i-social"/></svg>Chesshub</button>
+        <button class="tab" data-wtab="tv"><svg><use href="#i-watch"/></svg>Lichess TV</button>
+        <button class="tab" data-wtab="famous"><svg><use href="#i-trophy"/></svg>Famous Games</button>
+      </div>
+      <div class="tab-content" id="watch-content"></div>
+    </aside>
+
+    <!-- ===== Game Review / Analysis ===== -->
+    <aside class="panel page-panel hidden" data-page="review" id="review-panel">
+      <div class="panel-tabs"><span class="tab active"><svg><use href="#i-trophy"/></svg>Game Review</span></div>
+      <div class="tab-content rv-content" id="rv-content"></div>
+    </aside>
+  </main>
+
+  <!-- Sider uden bræt (News, Social, More, Help) tegnes her -->
+  <main class="content-page hidden" id="content-page"></main>
+
+  <!-- ===================================================================
+       Indstillinger (vindue)
+       =================================================================== -->
+  <div class="modal-backdrop hidden" id="settings-modal">
+    <div class="modal">
+      <div class="modal-header">
+        <h2>Settings</h2>
+        <button class="modal-close" id="btn-close-settings" title="Close"><svg><use href="#i-close"/></svg></button>
+      </div>
+      <div class="modal-body">
+        <h3>Board</h3>
+        <div class="theme-list" id="theme-list"></div>
+
+        <h3>Accent color</h3>
+        <div class="accent-list" id="accent-list"></div>
+
+        <h3>Pieces</h3>
+        <div class="piece-set-list" id="piece-set-list"></div>
+
+        <h3>Gameplay</h3>
+        <div class="toggle-list" id="toggle-list"></div>
+
+        <h3>Interface</h3>
+        <div class="toggle-list" id="interface-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================================================================
+       Sign Up / Log In (vindue)
+       =================================================================== -->
+  <div class="modal-backdrop hidden" id="auth-modal">
+    <div class="modal auth-modal">
+      <div class="modal-header">
+        <h2 id="auth-title">Sign Up</h2>
+        <button class="modal-close" id="btn-close-auth" type="button" title="Close"><svg><use href="#i-close"/></svg></button>
+      </div>
+      <form class="modal-body auth-form" id="auth-form">
+        <label>Username<input id="auth-username" autocomplete="username" maxlength="20" required></label>
+        <label>Password<input id="auth-password" type="password" autocomplete="current-password" required></label>
+        <label id="auth-confirm-row">Confirm password<input id="auth-confirm" type="password" autocomplete="new-password"></label>
+        <div class="auth-error" id="auth-error"></div>
+        <button class="btn btn-green btn-huge" id="auth-submit">Create Account</button>
+        <div class="auth-switch" id="auth-switch"></div>
+        <p class="rv-muted small-note" id="auth-note">Your account works on every device – just log in.</p>
+      </form>
+    </div>
+  </div>
+
+  <!-- En ven udfordrer dig -->
+  <div class="modal-backdrop hidden" id="challenge-modal">
+    <div class="modal challenge-modal">
+      <div class="modal-body challenge-body">
+        <svg class="challenge-icon"><use href="#i-friend"/></svg>
+        <p id="challenge-text"></p>
+        <div class="challenge-buttons">
+          <button class="btn btn-gray" data-challenge-answer="decline">Decline</button>
+          <button class="btn btn-green" data-challenge-answer="accept">Accept</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Udfordr en ven: vælg tid og farve -->
+  <div class="modal-backdrop hidden" id="challenge-setup">
+    <div class="modal challenge-modal">
+      <div class="modal-header">
+        <h2 id="cs-title">Challenge</h2>
+        <button class="modal-close" data-cs-close title="Close"><svg><use href="#i-close"/></svg></button>
+      </div>
+      <div class="modal-body challenge-body">
+        <label class="friend-row"><span>Game</span>
+          <select class="pz-select" id="cs-type">
+            <option value="live">Live game</option>
+            <option value="daily">Daily (days per move)</option>
+            <option value="battle">Puzzle Battle</option>
+          </select></label>
+        <label class="friend-row" id="cs-tc-row"><span>Time</span><select class="pz-select" id="cs-tc"></select></label>
+        <label class="friend-row" id="cs-variant-row"><span>Variant</span><select class="pz-select" id="cs-variant"></select></label>
+        <p class="rv-muted cs-note" id="cs-note"></p>
+        <div class="friend-row" id="cs-color-row"><span>I play as</span>
+          <div class="color-choice small">
+            <button class="color-btn" data-cs-color="w"><img src="img/pieces/cburnett/wK.svg" alt="White"></button>
+            <button class="color-btn" data-cs-color="random"><svg><use href="#i-random"/></svg></button>
+            <button class="color-btn" data-cs-color="b"><img src="img/pieces/cburnett/bK.svg" alt="Black"></button>
+          </div>
+        </div>
+        <button class="btn btn-green btn-huge" id="cs-send">Send challenge</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Lille besked nederst på skærmen -->
+  <div class="toast" id="toast"></div>
+
+  <!-- Scripts: først reglerne, derefter vores egne filer -->
+  <script src="config.js"></script>
+  <script src="lib/chess.js"></script>
+  <script src="lib/chessops.js"></script>
+  <script src="js/variants.js"></script>
+  <script src="js/settings.js"></script>
+  <script src="js/sounds.js"></script>
+  <script src="js/openings.js"></script>
+  <script src="js/clock.js"></script>
+  <script src="js/board.js"></script>
+  <script src="js/engine.js"></script>
+  <script src="js/bots.js"></script>
+  <script src="lib/peerjs.min.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/accounts.js"></script>
+  <script src="js/charts.js"></script>
+  <script src="js/main.js"></script>
+  <script src="js/gate.js"></script>
+  <script src="js/puzzle-data.js"></script>
+  <script src="js/puzzles.js"></script>
+  <script src="js/review.js"></script>
+  <script src="js/coach.js"></script>
+  <script src="js/account.js"></script>
+  <script src="js/learn.js"></script>
+  <script src="js/online.js"></script>
+  <script src="js/famous-games.js"></script>
+  <script src="js/watch.js"></script>
+  <script src="js/friends.js"></script>
+  <script src="js/achievements.js"></script>
+  <script src="js/insights.js"></script>
+  <script src="js/daily.js"></script>
+  <script src="js/matchmaking.js"></script>
+  <script src="js/tournaments.js"></script>
+  <script src="js/explorer.js"></script>
+  <script src="js/clubs.js"></script>
+  <script src="js/community.js"></script>
+  <script src="js/pages.js"></script>
+</body>
+</html>

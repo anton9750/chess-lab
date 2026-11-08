@@ -1,0 +1,21 @@
+{
+  "name": "chesshub",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Chesshub – en skakside med bots, puzzles, varianter og Game Review (Vite + vanilla JS)",
+  "type": "module",
+  "scripts": {
+    "assets": "node scripts/build-libs.mjs && node scripts/fetch-assets.mjs",
+    "dev": "npm run assets && vite",
+    "build": "npm run assets && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "chessops": "^0.14.0",
+    "stockfish": "^18.0.0"
+  },
+  "devDependencies": {
+    "esbuild": "^0.24.0",
+    "vite": "^6.0.0"
+  }
+}

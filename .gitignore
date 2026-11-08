@@ -1,0 +1,6 @@
+node_modules
+dist
+# Genereres af 'npm run assets'
+public/lib/chessops.js
+public/lib/stockfish-*
+public/img/pieces
