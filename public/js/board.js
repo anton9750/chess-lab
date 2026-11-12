@@ -24,6 +24,7 @@ class BoardView {
     this.arrows = [];        // pile: [{ from: "e2", to: "e4" }, ...]
     this.hint = null;        // grøn tip-pil: { from, to } eller null
     this.marks = new Set();  // røde markeringer: felter
+    this.moveQuality = {};   // uci-træk → "good"/"okay"/"bad" (sættes udefra, viser farvede felter)
     this.rightStart = null;  // felt hvor et højreklik startede
     this.promoEl = null;     // menuen til bondeforvandling (hvis åben)
     this.squareEls = {};     // felt-navn → HTML-element
@@ -90,6 +91,8 @@ class BoardView {
         // Prik (tomt felt) eller ring (felt med brik) for lovlige træk
         if (settings.showHints && targets.some((m) => m.to === square)) {
           el.classList.add(chess.get(square) ? "hint-capture" : "hint");
+          const quality = this.qualityForTarget(square, targets);
+          if (quality) el.classList.add("quality-" + quality);
         }
 
         // Brikken – vises som et SVG-billede i baggrunden af en div
@@ -224,6 +227,16 @@ class BoardView {
 
   isLegalTarget(from, to) {
     return this.legalMovesFrom(from).some((m) => m.to === to);
+  }
+
+  // Farven på et felt man kan flytte til: "good" (grøn), "okay" (blå), "bad" (rød) eller null.
+  // Ved bondeforvandling er der fire mulige træk til samme felt – vi bruger damen.
+  qualityForTarget(square, targets) {
+    const movesHere = targets.filter((m) => m.to === square);
+    if (!movesHere.length) return null;
+    const move = movesHere.find((m) => !m.promotion || m.promotion === "q") || movesHere[0];
+    const uci = move.from + move.to + (move.promotion || "");
+    return this.moveQuality[uci] || null;
   }
 
   // ----- Mus og touch -----

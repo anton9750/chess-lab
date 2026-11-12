@@ -575,6 +575,14 @@ body.sidebar-collapsed [data-action="collapse"] svg {
   pointer-events: none;
 }
 
+/* Farvede felter ud fra Stockfish' vurdering af trækket: grøn = godt, blå = okay, rød = undgå */
+.square.hint.quality-good::after    { background: rgba(60, 179, 90, 0.75); }
+.square.hint.quality-okay::after    { background: rgba(66, 149, 222, 0.75); }
+.square.hint.quality-bad::after     { background: rgba(224, 70, 65, 0.75); }
+.square.hint-capture.quality-good::after { border-color: rgba(60, 179, 90, 0.85); }
+.square.hint-capture.quality-okay::after { border-color: rgba(66, 149, 222, 0.85); }
+.square.hint-capture.quality-bad::after  { border-color: rgba(224, 70, 65, 0.85); }
+
 /* Koordinater */
 .coord {
   position: absolute;
@@ -2468,6 +2476,20 @@ body[data-page="review"] .game-layout {
 }
 .rv-nav { flex-shrink: 0; }
 .rv-section-title { color: var(--muted); font-size: 12px; font-weight: 700; text-transform: uppercase; }
+.rv-best-suggestion,
+.best-move-suggestion {
+  font-size: 13px;
+  color: var(--text-soft);
+  padding: 8px 10px;
+  border-radius: 6px;
+  background: var(--panel-dark);
+  min-height: 1px;
+}
+.rv-best-suggestion:empty,
+.best-move-suggestion:empty { display: none; }
+.rv-best-suggestion b,
+.best-move-suggestion b { color: var(--text); }
+.best-move-suggestion { margin-bottom: 8px; }
 .rv-lines {
   display: flex;
   flex-direction: column;

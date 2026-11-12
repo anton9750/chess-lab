@@ -505,8 +505,22 @@ const Review = {
         this.liveEval = this.liveLines[0].eval;
         this.drawEvalBar();
         this.drawLines();
+        this.drawBestMove();
       },
     });
+  },
+
+  // Analysebrættet: tekst om hvilket træk Stockfish anbefaler i den viste stilling
+  // (fx "White to move: Stockfish recommends Nf3.")
+  drawBestMove() {
+    const el = $("rv-best-suggestion");
+    if (!el) return;
+    const fen = this.positions[this.viewPly];
+    const chess = new Chess(fen);
+    if (chess.isGameOver() || !this.liveLines.length) { el.innerHTML = ""; return; }
+    const mover = chess.turn() === "w" ? "White" : "Black";
+    const bestSan = uciToSan(fen, this.liveLines[0].move);
+    el.innerHTML = `<b>${mover} to move:</b> Stockfish's top recommendation is <b>${bestSan}</b>.`;
   },
 
   // ----- Træk på analysebrættet -----
@@ -665,6 +679,7 @@ const Review = {
     if (this.mode === "analysis") {
       panel.innerHTML = this.analysisHTML();
       this.drawLines();
+      this.drawBestMove();
       Explorer.show(this.positions[this.viewPly]); // åbningsbiblioteket for den viste stilling
       return;
     }
@@ -780,6 +795,7 @@ const Review = {
     const opening = getOpeningName(this.moves.slice(0, this.viewPly).map((m) => m.san));
     return `
       <div class="rv-section-title">Stockfish ${ENGINE_MODERN ? 19 : 10} · depth 18</div>
+      <div class="rv-best-suggestion" id="rv-best-suggestion"></div>
       <div class="rv-lines" id="rv-lines"></div>
       <div class="opening"><svg><use href="#i-book"/></svg><span>${this.viewPly === 0 ? "Starting Position" : opening || "Uncommon Opening"}</span></div>
       <div class="rv-moves">${moveRows || '<div class="rv-muted rv-center">Make a move on the board for either side.</div>'}</div>

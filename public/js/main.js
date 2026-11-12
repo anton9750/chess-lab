@@ -708,22 +708,75 @@ async function updateLiveEval() {
   if (typeof analyzePosition === "undefined") return; // review.js er ikke indlæst endnu
   const on = liveEvalAllowed();
   $("eval-bar").classList.toggle("hidden", !on);
+  $("best-move-suggestion").classList.toggle("hidden", !on);
   document.body.classList.toggle("live-eval", on);
   if (!on) return;
   const fen = currentChess().fen();
-  if (fen === liveEval.fen) return renderEvalBar(liveEval.ev, state.flipped);
+  if (fen === liveEval.fen) {
+    renderEvalBar(liveEval.ev, state.flipped);
+    return renderBestMoveSuggestion(fen, liveEval.bestUci);
+  }
   liveEval.fen = fen;
+  liveEval.bestUci = null;
+  renderBestMoveSuggestion(fen, null);
   const token = ++liveEval.token;
   if (!evalEngine) evalEngine = new Engine();
   const res = await analyzePosition(fen, { depth: 14, movetime: 700 }, evalEngine);
   if (token !== liveEval.token || !res) return;
   liveEval.ev = res.eval;
-  if (liveEvalAllowed()) renderEvalBar(res.eval, state.flipped);
+  liveEval.bestUci = res.lines[0] ? res.lines[0].move : null;
+  if (liveEvalAllowed()) {
+    renderEvalBar(res.eval, state.flipped);
+    renderBestMoveSuggestion(fen, liveEval.bestUci);
+  }
+}
+
+// Viser hvilket træk Stockfish anbefaler i stillingen, fx "White to move: Nf3."
+function renderBestMoveSuggestion(fen, bestUci) {
+  const el = $("best-move-suggestion");
+  if (!el) return;
+  const chess = new Chess(fen);
+  if (!bestUci || chess.isGameOver()) { el.innerHTML = ""; return; }
+  const mover = chess.turn() === "w" ? "White" : "Black";
+  const bestSan = typeof uciToSan === "function" ? uciToSan(fen, bestUci) : bestUci;
+  el.innerHTML = `<b>${mover} to move:</b> Stockfish suggests <b>${bestSan}</b>.`;
+}
+
+// ----- Farvede felter: hvor godt er hvert lovligt træk? -----
+// Grøn = godt træk, blå = okay (lidt svagere), rød = regelret dårligt (undgå det).
+// Bruger MultiPV til at få Stockfish' vurdering af ALLE lovlige træk i én søgning,
+// og sammenligner hver med det bedste træk for at give det en farve.
+let qualityEngine = null;
+const moveQuality = { fen: null, map: {}, token: 0 };
+
+async function updateMoveQuality() {
+  if (typeof winPercent === "undefined") return; // review.js er ikke indlæst endnu
+  if (!liveEvalAllowed()) { moveQuality.fen = null; moveQuality.map = {}; return; }
+  const fen = currentChess().fen();
+  if (fen === moveQuality.fen) return;
+  moveQuality.fen = fen;
+  moveQuality.map = {};
+  const legal = new Chess(fen).moves({ verbose: true });
+  if (!legal.length) return;
+  const token = ++moveQuality.token;
+  if (!qualityEngine) qualityEngine = new Engine();
+  const res = await qualityEngine.analyze(fen, { depth: 12, movetime: 600, multipv: legal.length });
+  if (token !== moveQuality.token || !res || !res.lines.length) return;
+  const wins = res.lines.map((l) => ({ move: l.move, win: winPercent({ cp: l.cp, mate: l.mate }) }));
+  const bestWin = Math.max(...wins.map((w) => w.win));
+  const map = {};
+  wins.forEach((w) => {
+    const loss = bestWin - w.win;
+    map[w.move] = loss < 10 ? "good" : loss < 25 ? "okay" : "bad";
+  });
+  moveQuality.map = map;
+  if (liveEvalAllowed() && fen === currentChess().fen()) drawBoard();
 }
 
 function drawBoard() {
   if (currentPage !== "play") return; // puzzle-siden tegner selv brættet
   updateLiveEval();
+  updateMoveQuality();
   const ply = currentPly();
   const live = state.viewPly === null;
   // Kigger vi på et gammelt træk, laver vi et midlertidigt parti med den stilling
@@ -738,6 +791,7 @@ function drawBoard() {
   // Premoves: mod bots og venner, når det er modstanderens tur
   const premove = settings.premoves && (state.mode === "bot" || state.mode === "online") && state.game.turn() !== state.humanColor;
 
+  board.moveQuality = live && liveEvalAllowed() ? moveQuality.map : {};
   board.draw({
     chess,
     flipped: state.flipped,
