@@ -749,18 +749,22 @@ function renderBestMoveSuggestion(fen, bestUci) {
 let qualityEngine = null;
 const moveQuality = { fen: null, map: {}, token: 0 };
 
-async function updateMoveQuality() {
+// canSelect = er det overhovedet muligt for mennesket at vælge en brik lige nu?
+// (ikke under botens betænkningstid, ikke når man kigger på et gammelt træk, ikke når partiet er slut)
+async function updateMoveQuality(canSelect) {
   if (typeof winPercent === "undefined") return; // review.js er ikke indlæst endnu
-  if (!liveEvalAllowed()) { moveQuality.fen = null; moveQuality.map = {}; return; }
+  if (!canSelect || !liveEvalAllowed()) { moveQuality.fen = null; moveQuality.map = {}; return; }
   const fen = currentChess().fen();
   if (fen === moveQuality.fen) return;
   moveQuality.fen = fen;
   moveQuality.map = {};
   const legal = new Chess(fen).moves({ verbose: true });
   if (!legal.length) return;
+  // Loft på MultiPV: holder søgningen hurtig selv i stillinger med usædvanligt mange træk.
+  const multipv = Math.min(legal.length, 40);
   const token = ++moveQuality.token;
   if (!qualityEngine) qualityEngine = new Engine();
-  const res = await qualityEngine.analyze(fen, { depth: 12, movetime: 600, multipv: legal.length });
+  const res = await qualityEngine.analyze(fen, { depth: 12, movetime: 800, multipv });
   if (token !== moveQuality.token || !res || !res.lines.length) return;
   const wins = res.lines.map((l) => ({ move: l.move, win: winPercent({ cp: l.cp, mate: l.mate }) }));
   const bestWin = Math.max(...wins.map((w) => w.win));
@@ -776,7 +780,6 @@ async function updateMoveQuality() {
 function drawBoard() {
   if (currentPage !== "play") return; // puzzle-siden tegner selv brættet
   updateLiveEval();
-  updateMoveQuality();
   const ply = currentPly();
   const live = state.viewPly === null;
   // Kigger vi på et gammelt træk, laver vi et midlertidigt parti med den stilling
@@ -791,7 +794,11 @@ function drawBoard() {
   // Premoves: mod bots og venner, når det er modstanderens tur
   const premove = settings.premoves && (state.mode === "bot" || state.mode === "online") && state.game.turn() !== state.humanColor;
 
-  board.moveQuality = live && liveEvalAllowed() ? moveQuality.map : {};
+  // Kun relevant at farvelægge felter, når man rent faktisk kan vælge en brik lige nu
+  // (ikke mens botten tænker, ikke når man kigger på et gammelt træk, ikke når partiet er slut).
+  const canSelect = live && !state.result && myTurn;
+  updateMoveQuality(canSelect);
+  board.moveQuality = canSelect && liveEvalAllowed() ? moveQuality.map : {};
   board.draw({
     chess,
     flipped: state.flipped,
