@@ -249,6 +249,20 @@
         <div class="coach-box hidden" id="coach-box"></div>
         <div class="opening" id="opening">
           <svg><use href="#i-book"/></svg><span id="opening-name">Starting Position</span>
+          <button class="opening-browse-btn" id="btn-browse-openings" type="button" title="Browse openings">
+            <svg><use href="#i-search"/></svg>Openings
+          </button>
+        </div>
+
+        <!-- Valgt åbnings trækliste, til at træne ved at spille den ud selv -->
+        <div class="opening-trainer hidden" id="opening-trainer">
+          <div class="opening-trainer-header">
+            <span id="opening-trainer-name"></span>
+            <button class="opening-trainer-close" id="btn-close-opening-trainer" title="Hide">
+              <svg><use href="#i-close"/></svg>
+            </button>
+          </div>
+          <div class="opening-trainer-moves" id="opening-trainer-moves"></div>
         </div>
 
         <!-- Stockfish' anbefalede næste træk (vises sammen med evalueringsbjælken) -->
@@ -464,6 +478,22 @@
   </div>
 
   <!-- ===================================================================
+       Søg efter en åbning (vindue)
+       =================================================================== -->
+  <div class="modal-backdrop hidden" id="opening-book-modal">
+    <div class="modal opening-book-modal">
+      <div class="modal-header">
+        <h2>Browse Openings</h2>
+        <button class="modal-close" id="btn-close-opening-book" title="Close"><svg><use href="#i-close"/></svg></button>
+      </div>
+      <div class="modal-body">
+        <input type="text" class="opening-book-input" id="opening-book-input" placeholder="Search an opening, e.g. “ruy”, “scandi”, “lond”…" autocomplete="off">
+        <div class="opening-book-results" id="opening-book-results"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================================================================
        Sign Up / Log In (vindue)
        =================================================================== -->
   <div class="modal-backdrop hidden" id="auth-modal">
@@ -547,6 +577,7 @@
   <script src="js/accounts.js"></script>
   <script src="js/charts.js"></script>
   <script src="js/main.js"></script>
+  <script src="js/opening-book.js"></script>
   <script src="js/gate.js"></script>
   <script src="js/puzzle-data.js"></script>
   <script src="js/puzzles.js"></script>

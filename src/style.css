@@ -817,6 +817,20 @@ body.sidebar-collapsed [data-action="collapse"] svg {
   font-size: 13px;
   font-weight: 600;
 }
+.opening-browse-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-left: auto;
+  padding: 4px 9px;
+  border-radius: 5px;
+  background: var(--chip);
+  color: var(--text-soft);
+  font-size: 12px;
+  font-weight: 600;
+}
+.opening-browse-btn:hover { background: var(--chip-hover); color: var(--text); }
+.opening-browse-btn svg { width: 13px; height: 13px; }
 .opening svg {
   width: 16px;
   height: 16px;
@@ -1140,6 +1154,74 @@ body.sidebar-collapsed [data-action="collapse"] svg {
 .modal-body {
   padding: 4px 18px 20px;
   overflow-y: auto;
+}
+.opening-book-modal .modal-body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 0;
+}
+.opening-book-input {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 7px;
+  background: var(--panel-dark);
+  color: var(--text);
+  font-size: 14px;
+}
+.opening-book-results {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-height: 50vh;
+  overflow-y: auto;
+}
+.opening-book-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 10px;
+  width: 100%;
+  padding: 9px 10px;
+  border-radius: 6px;
+  text-align: left;
+}
+.opening-book-item:hover { background: var(--chip-hover); }
+.opening-book-item span:first-child { font-weight: 600; }
+.opening-book-moves {
+  flex-shrink: 0;
+  color: var(--muted);
+  font-size: 12px;
+  font-family: ui-monospace, Consolas, monospace;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 45%;
+}
+.opening-book-empty { padding: 10px; color: var(--muted); }
+.opening-trainer {
+  margin: 0 0 10px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: var(--panel-dark);
+}
+.opening-trainer-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+.opening-trainer-header span { font-weight: 600; font-size: 13px; }
+.opening-trainer-close { color: var(--muted); padding: 2px; }
+.opening-trainer-close:hover { color: var(--text); }
+.opening-trainer-close svg { width: 14px; height: 14px; }
+.opening-trainer-moves {
+  margin-top: 8px;
+  font-family: ui-monospace, Consolas, monospace;
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--text);
+  word-break: break-word;
 }
 .modal-body h3 {
   margin: 16px 0 10px;
