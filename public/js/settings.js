@@ -52,6 +52,7 @@ const DEFAULT_SETTINGS = {
   premoves: true,       // må man lave sit næste træk, mens modstanderen tænker?
   siteTheme: "dark",    // "dark" eller "light"
   evalBar: true,        // vis evalueringsbjælken i bot- og coach-partier
+  board3D: false,       // 3D Mode: vis brættet som en fotorealistisk 3D-scene
 };
 
 const SETTINGS_KEY = "chessplace-settings";

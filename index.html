@@ -220,6 +220,7 @@
             </div>
             <div class="game-over-players" id="game-over-players"></div>
             <div class="game-over-rating" id="game-over-rating"></div>
+            <div class="game-over-perf" id="game-over-perf"></div>
             <div class="game-over-review">
               <button class="btn btn-green btn-huge" id="btn-review-game"><svg><use href="#i-trophy"/></svg>Game Review</button>
             </div>
@@ -258,9 +259,12 @@
         <div class="opening-trainer hidden" id="opening-trainer">
           <div class="opening-trainer-header">
             <span id="opening-trainer-name"></span>
-            <button class="opening-trainer-close" id="btn-close-opening-trainer" title="Hide">
-              <svg><use href="#i-close"/></svg>
-            </button>
+            <div class="opening-trainer-actions">
+              <button class="opening-trainer-toggle" id="btn-toggle-opening-trainer">Hide</button>
+              <button class="opening-trainer-close" id="btn-close-opening-trainer" title="Close">
+                <svg><use href="#i-close"/></svg>
+              </button>
+            </div>
           </div>
           <div class="opening-trainer-moves" id="opening-trainer-moves"></div>
         </div>
@@ -494,6 +498,26 @@
   </div>
 
   <!-- ===================================================================
+       Importer en PGN (fx fra chess.com) og kør den gennem Game Review
+       =================================================================== -->
+  <div class="modal-backdrop hidden" id="pgn-import-modal">
+    <div class="modal pgn-import-modal">
+      <div class="modal-header">
+        <h2>Import a PGN</h2>
+        <button class="modal-close" id="btn-close-pgn-import" title="Close"><svg><use href="#i-close"/></svg></button>
+      </div>
+      <div class="modal-body">
+        <p class="rv-muted">Upload a .pgn file (chess.com, lichess, …) or paste the PGN text. Stockfish will go through every move and work out your accuracy and an estimated performance rating.</p>
+        <input type="file" class="pgn-import-file" id="pgn-import-file" accept=".pgn,text/plain">
+        <textarea class="pgn-import-text" id="pgn-import-text" rows="6" placeholder="…or paste PGN text here"></textarea>
+        <div class="pgn-import-preview hidden" id="pgn-import-preview"></div>
+        <div class="pgn-import-error" id="pgn-import-error"></div>
+        <button class="btn btn-green btn-huge" id="btn-pgn-import-review" disabled>Review This Game</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================================================================
        Sign Up / Log In (vindue)
        =================================================================== -->
   <div class="modal-backdrop hidden" id="auth-modal">
@@ -564,12 +588,14 @@
   <script src="config.js"></script>
   <script src="lib/chess.js"></script>
   <script src="lib/chessops.js"></script>
+  <script src="lib/three.js"></script>
   <script src="js/variants.js"></script>
   <script src="js/settings.js"></script>
   <script src="js/sounds.js"></script>
   <script src="js/openings.js"></script>
   <script src="js/clock.js"></script>
   <script src="js/board.js"></script>
+  <script src="js/board3d.js"></script>
   <script src="js/engine.js"></script>
   <script src="js/bots.js"></script>
   <script src="lib/peerjs.min.js"></script>
@@ -578,6 +604,7 @@
   <script src="js/charts.js"></script>
   <script src="js/main.js"></script>
   <script src="js/opening-book.js"></script>
+  <script src="js/pgn-import.js"></script>
   <script src="js/gate.js"></script>
   <script src="js/puzzle-data.js"></script>
   <script src="js/puzzles.js"></script>

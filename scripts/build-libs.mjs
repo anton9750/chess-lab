@@ -34,7 +34,15 @@ window.Chessops = {
 };
 `);
 
-for (const [entry, file] of [["chessops-entry.js", "chessops.js"]]) {
+// 3) three + GLTFLoader → globalt "THREE" (bruges af board3d.js til 3D Mode)
+writeFileSync(resolve(tmp, "three-entry.js"), `
+import * as THREE from "three";
+import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
+
+window.THREE = { ...THREE, GLTFLoader };
+`);
+
+for (const [entry, file] of [["chessops-entry.js", "chessops.js"], ["three-entry.js", "three.js"]]) {
   await build({
     entryPoints: [resolve(tmp, entry)],
     outfile: resolve(out, file),

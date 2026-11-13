@@ -503,6 +503,19 @@ body.sidebar-collapsed [data-action="collapse"] svg {
   touch-action: none;   /* så man kan trække brikker på telefon uden at siden scroller */
 }
 
+/* 3D Mode: Three.js-canvasset ligger oven på det almindelige bræt og vises i stedet for det */
+.board3d-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 3px;
+  touch-action: none;
+  cursor: grab;
+}
+.board3d-canvas.hidden { display: none; }
+.board3d-canvas:active { cursor: grabbing; }
+
 .square {
   position: relative;
 }
@@ -656,6 +669,30 @@ body.sidebar-collapsed [data-action="collapse"] svg {
 }
 .promo-close:hover {
   color: #312e2b;
+}
+
+/* 3D Mode: samme idé som .promo-picker, men placeret frit over den klikkede brik
+   (kameraet kan jo kigge fra en hvilken som helst vinkel, så feltet er ikke altid i toppen/bunden) */
+.board3d-promo-picker {
+  position: absolute;
+  display: flex;
+  flex-direction: row;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.6);
+  overflow: hidden;
+  transform: translate(-50%, -50%);
+  z-index: 21;
+}
+.board3d-promo-picker .promo-option {
+  width: 56px;
+  height: 56px;
+  background-size: 85%;
+}
+.board3d-promo-picker .promo-close {
+  width: 28px;
+  height: 56px;
+  font-size: 16px;
 }
 
 /* ===== Slut-vindue ===== */
@@ -1212,6 +1249,15 @@ body.sidebar-collapsed [data-action="collapse"] svg {
   gap: 10px;
 }
 .opening-trainer-header span { font-weight: 600; font-size: 13px; }
+.opening-trainer-actions { display: flex; align-items: center; gap: 8px; }
+.opening-trainer-toggle {
+  padding: 3px 10px;
+  border-radius: 5px;
+  background: var(--chip);
+  color: var(--text);
+  font-size: 12px;
+}
+.opening-trainer-toggle:hover { background: var(--chip-hover); }
 .opening-trainer-close { color: var(--muted); padding: 2px; }
 .opening-trainer-close:hover { color: var(--text); }
 .opening-trainer-close svg { width: 14px; height: 14px; }
@@ -1223,6 +1269,62 @@ body.sidebar-collapsed [data-action="collapse"] svg {
   color: var(--text);
   word-break: break-word;
 }
+.games-tab-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 4px;
+}
+.pgn-import-modal .modal-body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.pgn-import-file {
+  width: 100%;
+  color: var(--text-soft);
+  font-size: 13px;
+}
+.pgn-import-text {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 7px;
+  background: var(--panel-dark);
+  color: var(--text);
+  font-family: ui-monospace, Consolas, monospace;
+  font-size: 12px;
+  resize: vertical;
+}
+.pgn-import-error { color: #ef7a6e; font-size: 13px; }
+.pgn-import-error:empty { display: none; }
+.pgn-import-preview {
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: var(--panel-dark);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.pgn-import-matchup { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-weight: 600; }
+.pgn-import-meta { font-size: 12px; }
+.pgn-color-pick { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+.pgn-color-btn {
+  padding: 4px 12px;
+  border-radius: 6px;
+  background: var(--chip);
+  color: var(--text);
+  font-size: 13px;
+}
+.pgn-color-btn:hover { background: var(--chip-hover); }
+.pgn-color-btn.selected { background: var(--green); color: #fff; }
+.rv-perf {
+  text-align: center;
+  color: var(--text-soft);
+  font-size: 13px;
+  margin-top: -4px;
+}
+.rv-perf b { color: #fff; }
 .modal-body h3 {
   margin: 16px 0 10px;
   font-size: 13px;
@@ -2257,6 +2359,14 @@ button.pz-hist:hover { filter: brightness(1.15); }
 }
 .game-over-rating:empty { display: none; }
 .game-over-rating b { font-size: 18px; color: #fff; }
+.game-over-perf {
+  text-align: center;
+  color: var(--text-soft);
+  font-size: 13px;
+  margin-top: 2px;
+}
+.game-over-perf:empty { display: none; }
+.game-over-perf b { color: #fff; }
 .game-over-review {
   padding: 14px 18px 0;
 }

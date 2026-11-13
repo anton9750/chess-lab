@@ -46,6 +46,8 @@ const COLOR_NAMES = { w: "White", b: "Black" };
 
 // ----- 2. Spillets tilstand -----
 
+let perfToken = 0; // annullerer en gammel performance-estimering, hvis der startes et nyt parti
+
 const state = {
   game: new Chess(),        // selve partiet (reglerne)
   positions: [],            // stillingen (FEN) efter hvert træk – til at bladre tilbage
@@ -91,8 +93,70 @@ const els = {
   offerBar: $("offer-bar"),
 };
 
-// Brættet og uret
-const board = new BoardView($("board-wrap"));
+// Brættet og uret.
+// To bræt-renderere findes altid (2D og 3D), men kun ét er synligt ad gangen.
+// "board" er en facade, der sender kald videre til det, der er aktivt lige nu,
+// så alle andre filer (review.js, puzzles.js, ...) kan blive ved med at kalde
+// board.draw(...)/board.onMove osv. uden at vide, hvilket bræt der rent faktisk tegner.
+const boardView = new BoardView($("board-wrap"));
+const board3d = new Board3D($("board-wrap"));
+const board = createBoardFacade(boardView, board3d);
+
+function createBoardFacade(view2d, view3d) {
+  const facade = {};
+  let active3D = false;
+
+  // Crazyhouse (brikker fra "lommen") er ikke modelleret i 3D-scenen, så den
+  // slags partier bruger altid 2D-brættet, uanset om 3D Mode er slået til.
+  const mustUse2D = (opts) => !!(opts && opts.chess && typeof opts.chess.dropSquares === "function");
+
+  function setActive(use3D) {
+    if (use3D === active3D) return;
+    active3D = use3D;
+    view3d.canvas.classList.toggle("hidden", !active3D);
+    view2d.boardEl.classList.toggle("hidden", active3D);
+    view2d.arrowsEl.classList.toggle("hidden", active3D);
+  }
+
+  facade.draw = (opts) => {
+    facade._lastOpts = opts;
+    setActive(!!settings.board3D && !mustUse2D(opts));
+    (active3D ? view3d : view2d).draw(opts);
+  };
+  facade.showHint = (move) => { view2d.showHint(move); view3d.showHint(move); };
+
+  // Callback-egenskaber sættes kun én gang, direkte som felter (ikke som metodekald),
+  // så de skal spejles ind på begge bræt-objekter med det samme – ellers mister det
+  // bræt, man skifter TIL, sin onMove osv.
+  ["onMove", "onDrop", "onPremove", "onPremoveCancel", "onBoardTouch"].forEach((prop) => {
+    let value = null;
+    Object.defineProperty(facade, prop, {
+      get: () => value,
+      set: (v) => { value = v; view2d[prop] = v; view3d[prop] = v; },
+    });
+  });
+  // "hint" sættes nogle steder direkte (uden om showHint), og skal også spejles
+  Object.defineProperty(facade, "hint", {
+    get: () => view2d.hint,
+    set: (v) => { view2d.hint = v; view3d.hint = v; },
+  });
+  // "lastMoveWasDrag": kun 2D kan sætte den til true (3D har ingen træk-med-musen,
+  // så der glider trækket altid) – læses derfor fra det bræt, der er aktivt lige nu.
+  Object.defineProperty(facade, "lastMoveWasDrag", {
+    get: () => (active3D ? view3d : view2d).lastMoveWasDrag,
+    set: (v) => { view2d.lastMoveWasDrag = v; view3d.lastMoveWasDrag = v; },
+  });
+  // Resten er kun relevante for det almindelige bræt (pile, markeringer, crazyhouse-lomme,
+  // farvede felter for træk-kvalitet) – 3D bruger dem ikke, så de går direkte til 2D-brættet.
+  ["arrows", "marks", "selected", "dropPiece", "moveQuality"].forEach((prop) => {
+    Object.defineProperty(facade, prop, {
+      get: () => view2d[prop],
+      set: (v) => { view2d[prop] = v; },
+    });
+  });
+
+  return facade;
+}
 const clock = new ChessClock({
   onTick: () => drawClocks(),
   onFlag: (color) => handleTimeout(color),
@@ -166,6 +230,7 @@ function startNewGame(options) {
   state.mode = options.mode;
   state.timeControl = options.timeControl;
   state.lastOptions = options; // husk til "Rematch"
+  perfToken++; // dropper en evt. igangværende performance-estimering fra sidste parti
 
   if (options.mode === "bot") {
     state.bot = options.bot;
@@ -1110,9 +1175,39 @@ function showGameOver() {
   // Rating-ændring (mod bots og venner)
   const g = state.recordedGame;
   drawGameOverRating();
+  drawGameOverPerformance();
   $("btn-review-game").classList.toggle("hidden", !g || isVariant(state.variant)); // Game Review kender kun almindelig skak
 
   els.gameOver.classList.remove("hidden");
+}
+
+// Groft bud på, hvilken rating man præsterede på i partiet: tager højde for
+// om man vandt/tabte/remis'ede mod botten, og hvor præcist man spillede.
+function estimatePerformanceElo(accuracy, score, opponentRating) {
+  const resultShift = (score - 0.5) * 400 * 0.6; // klassisk performance-rating-skift, dæmpet for ét enkelt parti
+  const accuracyShift = (accuracy - 70) * 9;      // 70% nøjagtighed regnes ca. på niveau med modstanderens rating
+  const est = opponentRating + resultShift + accuracyShift;
+  return Math.max(100, Math.min(3200, Math.round(est / 10) * 10));
+}
+
+// Kører en hurtig baggrunds-analyse af partiet og viser en estimeret rating ud fra nøjagtigheden.
+async function drawGameOverPerformance() {
+  const el = $("game-over-perf");
+  if (!el) return;
+  el.innerHTML = "";
+  const g = state.recordedGame;
+  if (!g || state.mode !== "bot" || isVariant(state.variant) || state.coachGame || !g.sans || g.sans.length < 2) return;
+
+  const token = ++perfToken;
+  el.innerHTML = `<span class="rv-muted">Estimating your performance…</span>`;
+  const summary = await quickReviewGame(g, () => token !== perfToken, () => {});
+  if (token !== perfToken || !summary || summary.accuracy == null) { el.innerHTML = ""; return; }
+
+  const won = (g.result === "1-0" && g.myColor === "w") || (g.result === "0-1" && g.myColor === "b");
+  const draw = g.result === "1/2-1/2";
+  const score = won ? 1 : draw ? 0.5 : 0;
+  const est = estimatePerformanceElo(summary.accuracy, score, g.opponentRating || 1200);
+  el.innerHTML = `Estimated performance: <b>${est}</b> <span class="rv-muted">(${summary.accuracy}% accuracy)</span>`;
 }
 
 // Rating-linjen i "game over"-boksen (kaldes igen, når serveren har svaret)
@@ -1282,7 +1377,12 @@ function drawGamesTab() {
   const games = Accounts.profile().games;
   $("tab-games").innerHTML = `
     <div class="pz-scroll">
-      <h2 class="pz-heading">Your games <span class="rv-muted">${games.length}</span></h2>
+      <div class="games-tab-header">
+        <h2 class="pz-heading">Your games <span class="rv-muted">${games.length}</span></h2>
+        <button class="btn btn-gray btn-small" id="btn-import-pgn" type="button">
+          <svg class="btn-icon"><use href="#i-book"/></svg>Import PGN
+        </button>
+      </div>
       ${gameListHTML(games)}
     </div>`;
 }
@@ -1291,6 +1391,7 @@ $("tab-games").addEventListener("click", (e) => {
   if (btn) openArchivedGame(btn.dataset.reviewGame);
   const pgn = e.target.closest("[data-pgn-game]");
   if (pgn) downloadArchivedPGN(pgn.dataset.pgnGame);
+  if (e.target.closest("#btn-import-pgn")) openPgnImport();
 });
 
 document.querySelectorAll(".tab[data-tab]").forEach((t) => {
@@ -1539,6 +1640,7 @@ function drawSettings() {
     ["premoves", "Allow premoves"],
     ["evalBar", "Evaluation bar (bot & coach games)"],
     ["sounds", "Sounds"],
+    ["board3D", "3D Mode (photorealistic board)"],
   ];
   $("toggle-list").innerHTML = toggles.map(([key, label]) => `
     <label class="toggle-row">

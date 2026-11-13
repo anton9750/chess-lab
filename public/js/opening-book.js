@@ -117,6 +117,8 @@ const OPENING_BOOK = [
   ["English Opening: Symmetrical Variation", "c4 c5"],
   ["Réti Opening", "Nf3 d5 c4"],
   ["King's Indian Attack", "Nf3 d5 g3"],
+
+  ["The Cow Opening", "Na3 d5 Nh3 e5 g3 Nf6 Bg2 Bd6 b3 O-O Bb2"],
 ];
 
 // Finder åbninger, hvis navn passer med søgningen. Dem hvor et HELT ord
@@ -184,6 +186,8 @@ function showOpeningMoves(entry) {
   }
   $("opening-trainer-name").textContent = name;
   $("opening-trainer-moves").textContent = numbered.trim();
+  $("opening-trainer-moves").classList.remove("hidden");
+  $("btn-toggle-opening-trainer").textContent = "Hide";
   $("opening-trainer").classList.remove("hidden");
   closeOpeningBook();
 }
@@ -191,6 +195,11 @@ function showOpeningMoves(entry) {
 $("btn-browse-openings").addEventListener("click", openOpeningBook);
 $("btn-close-opening-book").addEventListener("click", closeOpeningBook);
 $("btn-close-opening-trainer").addEventListener("click", () => $("opening-trainer").classList.add("hidden"));
+$("btn-toggle-opening-trainer").addEventListener("click", () => {
+  const movesEl = $("opening-trainer-moves");
+  const nowHidden = movesEl.classList.toggle("hidden");
+  $("btn-toggle-opening-trainer").textContent = nowHidden ? "Show" : "Hide";
+});
 $("opening-book-modal").addEventListener("click", (e) => {
   if (e.target.id === "opening-book-modal") closeOpeningBook();
 });

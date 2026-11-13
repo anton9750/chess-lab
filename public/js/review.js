@@ -202,6 +202,20 @@ function summarizeReview(moves, results, positions, analysis, color) {
   };
 }
 
+// Viser en estimeret rating for partiet, hvis vi kender hvilken farve man selv spillede
+// og modstanderens rating (bots, venner eller en importeret PGN med Elo-tags).
+function perfEstimateHTML(g, acc) {
+  if (!g.myColor || !g.opponentRating) return "";
+  const list = acc[g.myColor];
+  if (!list.length) return "";
+  const accuracy = list.reduce((a, b) => a + b, 0) / list.length;
+  const won = (g.result === "1-0" && g.myColor === "w") || (g.result === "0-1" && g.myColor === "b");
+  const draw = g.result === "1/2-1/2";
+  const score = won ? 1 : draw ? 0.5 : 0;
+  const est = estimatePerformanceElo(accuracy, score, g.opponentRating);
+  return `<div class="rv-perf">Estimated performance: <b>${est}</b></div>`;
+}
+
 // En hurtig Game Review uden at vise noget (bruges af Insights til at analysere mange partier).
 // Returnerer sammendraget, eller null hvis den blev afbrudt.
 async function quickReviewGame(game, isCancelled, onProgress) {
@@ -770,6 +784,7 @@ const Review = {
         <span class="rv-acc-label">Accuracy</span>
         <div><span class="rv-acc black">${avg(acc.b)}</span><span class="rv-pname">${g.black.name}</span></div>
       </div>
+      ${perfEstimateHTML(g, acc)}
       <div class="rv-table">${rows}</div>
       <div class="rv-moves">${moveRows}</div>
       ${skillSummary}

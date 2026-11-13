@@ -12,7 +12,8 @@
   },
   "dependencies": {
     "chessops": "^0.14.0",
-    "stockfish": "^18.0.0"
+    "stockfish": "^18.0.0",
+    "three": "^0.187.0"
   },
   "devDependencies": {
     "esbuild": "^0.24.0",

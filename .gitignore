@@ -2,5 +2,9 @@ node_modules
 dist
 # Genereres af 'npm run assets'
 public/lib/chessops.js
+public/lib/three.js
 public/lib/stockfish-*
 public/img/pieces
+# Rå nedhentede filer (.blend, dubletter, ubrugte teksturer) – kun det, 3D Mode
+# faktisk bruger, ligger i public/models/chess_set/
+raw-assets
