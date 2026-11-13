@@ -101,6 +101,7 @@ const els = {
 const boardView = new BoardView($("board-wrap"));
 const board3d = new Board3D($("board-wrap"));
 const board = createBoardFacade(boardView, board3d);
+Board3DMenu.init(board3d);
 
 function createBoardFacade(view2d, view3d) {
   const facade = {};
@@ -1304,6 +1305,9 @@ $("btn-flip").addEventListener("click", () => {
 $("btn-toggle-3d").addEventListener("click", () => {
   settings.board3D = !settings.board3D;
   applySettingsChange();
+  // Komme ind i 3D for første gang fra 2D: vis 3D-menuen (Play/Bots/Games/Live TV) i stedet for
+  // bare at lande midt i det igangværende parti.
+  if (settings.board3D) Board3DMenu.open(); else Board3DMenu.disable();
 });
 
 // Piletasterne på tastaturet
@@ -1692,6 +1696,9 @@ $("settings-modal").addEventListener("click", (e) => {
 $("toggle-list").addEventListener("change", (e) => {
   settings[e.target.dataset.key] = e.target.checked;
   applySettingsChange();
+  if (e.target.dataset.key === "board3D") {
+    if (settings.board3D) Board3DMenu.open(); else Board3DMenu.disable();
+  }
 });
 
 function applySettingsChange() {

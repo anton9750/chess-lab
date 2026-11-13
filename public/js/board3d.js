@@ -24,6 +24,9 @@ const TABLE_GLTF_PATH = "table/chinese_tea_table_4k.gltf/chinese_tea_table_4k.gl
 // almindelig PNG i scripts/convert-exr.mjs) – bruges som baggrund, man kan dreje rundt om, og
 // som lyskilde/refleksion, så brikkerne ikke bare svæver i et sort tomrum.
 const ENV_PATH = "env/interior_2k.png";
+// Anden "scene" (nextScene): en skyet himmel (Poly Havens "Kloofendal 48d Partly Cloudy Puresky"
+// HDRI, samme forhåndskonvertering) uden bord – brættet svæver i luften i stedet for at stå på noget.
+const ENV_SKY_PATH = "env/sky_2k.png";
 // Springerne er modelleret i profil i stedet for mod modstanderen – dette er bedste bud på
 // hvor meget (og hvilken vej) de skal drejes. Hvis det stadig er forkert: prøv -KNIGHT_FACING_WHITE
 // i stedet for KNIGHT_FACING_WHITE i makePieceMesh(), eller juster selve vinklen her.
@@ -32,6 +35,9 @@ const KNIGHT_FACING_WHITE = Math.PI;
 // selve brætmodellen er modelleret med hjørnet fremad ("diamant") – drej hele bræt+felter+brikker
 // 45° om Y, så brættets sider flugter med bordets, i stedet for at stå på skrå oven på det.
 const BOARD_YAW = Math.PI / 4;
+// Scenen uden bord ("himmel"): brættet svæver denne højde over, hvor gulvet ville have været,
+// i stedet for at stå på et usynligt gulv midt i den åbne himmel.
+const FLOAT_HEIGHT = 0.3;
 function rotateXZ(x, z, angle = BOARD_YAW) {
   const cos = Math.cos(angle), sin = Math.sin(angle);
   return { x: x * cos - z * sin, z: x * sin + z * cos };
@@ -62,9 +68,20 @@ class Board3D {
     this.squareNodes = [];   // 64 usynlige felter til klik + fremhævning (fast position, index = row*8+col)
     this.lastFlipped = null;
 
+    this.hasTable = true; // skiftes med sceneBtn (nextScene) – anden "scene" er bare bræt+brikker uden bord
+
     this.canvas = document.createElement("canvas");
     this.canvas.className = "board3d-canvas hidden";
     wrapEl.appendChild(this.canvas);
+
+    // Pil i hjørnet af 3D-scenen: skifter til næste "scene" (lige nu: med bord ↔ kun bræt og brikker).
+    this.sceneBtn = document.createElement("button");
+    this.sceneBtn.className = "board3d-scene-toggle hidden";
+    this.sceneBtn.type = "button";
+    this.sceneBtn.title = "Next scene";
+    this.sceneBtn.innerHTML = '<svg viewBox="0 0 24 24"><path d="M8 5l8 7-8 7" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+    this.sceneBtn.addEventListener("click", () => this.nextScene());
+    wrapEl.appendChild(this.sceneBtn);
 
     this.renderer = new THREE.WebGLRenderer({ canvas: this.canvas, antialias: true });
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -85,7 +102,7 @@ class Board3D {
     this.rightDragging = false;
 
     this.buildLighting();
-    this.buildGround();
+    this.buildGroundShadow();
     this.buildSquareGrid();
     this.attachPointerHandlers();
     this.updateCameraFromOrbit();
@@ -100,8 +117,8 @@ class Board3D {
     requestAnimationFrame(tick);
   }
 
-  show() { this.canvas.classList.remove("hidden"); this.resize(); }
-  hide() { this.canvas.classList.add("hidden"); }
+  show() { this.canvas.classList.remove("hidden"); this.sceneBtn.classList.remove("hidden"); this.resize(); }
+  hide() { this.canvas.classList.add("hidden"); this.sceneBtn.classList.add("hidden"); }
 
   resize() {
     const rect = this.wrapEl.getBoundingClientRect();
@@ -143,36 +160,53 @@ class Board3D {
     this.scene.environment = this.pmrem.fromScene(new THREE.Scene(), 0.04).texture;
   }
 
-  // Panoramabillede af et rum som baggrund (man kan dreje kameraet rundt og se det hele vejen
-  // rundt) og som miljøbelysning/refleksion, så brikkerne og bordet ikke står i et tomt rum.
+  // Panoramabilleder som baggrund (man kan dreje kameraet rundt og se hele vejen rundt) og som
+  // miljøbelysning/refleksion, så brikkerne og bordet ikke bare står i et tomt rum. Begge scenens
+  // panoramaer loades her, så der ikke er en indlæsningspause, når man skifter scene med pilen.
   async loadEnvironment() {
-    const texture = await new THREE.TextureLoader().loadAsync(ENV_PATH);
-    texture.mapping = THREE.EquirectangularReflectionMapping;
-    texture.colorSpace = THREE.SRGBColorSpace;
-    this.scene.background = texture;
-    this.scene.environment = this.pmrem.fromEquirectangular(texture).texture;
+    const loadPano = async (path) => {
+      const texture = await new THREE.TextureLoader().loadAsync(path);
+      texture.mapping = THREE.EquirectangularReflectionMapping;
+      texture.colorSpace = THREE.SRGBColorSpace;
+      return texture;
+    };
+    const [roomTexture, skyTexture] = await Promise.all([loadPano(ENV_PATH), loadPano(ENV_SKY_PATH)]);
+    this.envRoom = { background: roomTexture, environment: this.pmrem.fromEquirectangular(roomTexture).texture };
+    this.envSky = { background: skyTexture, environment: this.pmrem.fromEquirectangular(skyTexture).texture };
+    this.applyEnvironment();
+  }
+
+  applyEnvironment() {
+    const env = this.hasTable ? this.envRoom : this.envSky;
+    if (!env) return;
+    this.scene.background = env.background;
+    this.scene.environment = env.environment;
   }
 
   // Intet synligt lokalt gulv-mesh: enhver farvet plade (ensfarvet eller blødt udtonet) så forkert
   // ud, fordi den aldrig rigtig matcher stengulvet i panoramabaggrunden (loadEnvironment). I stedet
-  // tilføjes en helt usynlig "skyggeopsamler" under bordets ben (buildGroundShadow, kaldt når
-  // bordets mål kendes), så benene får et kontaktpunkt uden at der ses nogen form/farve.
-  buildGround() {}
-
-  // Usynlig plade, kun lige stor nok til bordets fodaftryk, der tager imod benenes kontaktskygge
-  // (uden den ses selv slet ikke noget sted, benene ikke dækker).
-  buildGroundShadow(tableBounds) {
-    const radius = Math.max(
-      tableBounds.max.x - tableBounds.min.x,
-      tableBounds.max.z - tableBounds.min.z
-    ) * 0.5 + 0.03;
-    const geo = new THREE.CircleGeometry(radius, 48);
+  // er der en helt usynlig "skyggeopsamler" (buildGroundShadow), så det, der står på gulvet, får et
+  // kontaktpunkt uden at der ses nogen form/farve.
+  // Usynlig plade, kun lige stor nok til det, der står på gulvet lige nu (bordets fodaftryk, eller
+  // brættet selv i "kun bræt og brikker"-scenen – se setGroundShadowFootprint/nextScene), der tager
+  // imod kontaktskyggen (uden den ses selv slet ikke noget sted, ingenting dækker).
+  buildGroundShadow() {
+    const geo = new THREE.CircleGeometry(0.4, 48);
     const mat = new THREE.ShadowMaterial({ opacity: 0.45 });
-    const ground = new THREE.Mesh(geo, mat);
-    ground.rotation.x = -Math.PI / 2;
-    ground.position.y = 0.0005;
-    ground.receiveShadow = true;
-    this.scene.add(ground);
+    this.groundShadow = new THREE.Mesh(geo, mat);
+    this.groundShadow.rotation.x = -Math.PI / 2;
+    this.groundShadow.position.y = 0.0005;
+    this.groundShadow.receiveShadow = true;
+    this.scene.add(this.groundShadow);
+  }
+
+  setGroundShadowFootprint(bounds) {
+    const radius = Math.max(
+      bounds.max.x - bounds.min.x,
+      bounds.max.z - bounds.min.z
+    ) * 0.5 + 0.03;
+    this.groundShadow.geometry.dispose();
+    this.groundShadow.geometry = new THREE.CircleGeometry(radius, 48);
   }
 
   // 64 usynlige, flade felter: bruges både til at finde ud af, hvad man klikker på,
@@ -212,15 +246,11 @@ class Board3D {
     tableRoot.rotation.y = Math.PI / 4;
     tableRoot.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
     this.scene.add(tableRoot);
-    const tableBounds = new THREE.Box3().setFromObject(tableRoot);
-    this.tableTopY = tableBounds.max.y;
-    if (this.keyLight) {
-      // Midt mellem gulv og bordplade, så skyggens kasse (sat i buildLighting) dækker både
-      // brikkerne oven på bordet og bordets ben helt ned til gulvet.
-      this.keyLight.target.position.set(0, this.tableTopY * 0.5, 0);
-      this.keyLight.target.updateMatrixWorld();
-    }
-    this.buildGroundShadow(tableBounds);
+    this.tableRoot = tableRoot;
+    this.tableBounds = new THREE.Box3().setFromObject(tableRoot);
+    this.fullTableTopY = this.tableBounds.max.y;
+    this.tableTopY = this.fullTableTopY;
+    this.setGroundShadowFootprint(this.tableBounds);
 
     const pawns = [];
     const knights = { white: [], black: [] }; // springerne er to forskellige (spejlvendte) modeller, ikke den samme genbrugt
@@ -263,6 +293,7 @@ class Board3D {
     if (boardMesh) {
       const board = new THREE.Mesh(boardMesh.geometry, boardMesh.material);
       board.position.copy(boardMesh.position);
+      this.boardBaseY = boardMesh.position.y; // gemmes, så applyTableTopY kan lægge bordets højde oveni (eller lade være)
       board.position.y += this.tableTopY;
       board.quaternion.copy(boardMesh.quaternion);
       board.rotateY(BOARD_YAW);
@@ -270,19 +301,59 @@ class Board3D {
       board.castShadow = true;
       board.receiveShadow = true;
       this.scene.add(board);
+      this.boardObj = board;
+      // Brættets eget fodaftryk (til skyggeopsamleren, når bordet er fjernet – se nextScene)
+      this.boardBounds = new THREE.Box3().setFromObject(board);
     }
 
-    // Felterne (klik + markering) og orbit-målet placeres nu, hvor vi kender den rigtige størrelse
+    // Felterne (klik + markering) placeres nu, hvor vi kender den rigtige feltstørrelse
     this.squareNodes.forEach((mesh) => {
       const { row, col } = mesh.userData;
       mesh.scale.set(this.squareSize * 0.96, this.squareSize * 0.96, 1);
       const { x, z } = rotateXZ((col - 3.5) * this.squareSize, (row - 3.5) * this.squareSize);
-      mesh.position.set(x, this.tableTopY + this.pieceY + 0.0006, z);
+      mesh.position.set(x, 0, z); // y sættes af applyTableTopY
       mesh.rotateZ(BOARD_YAW); // følger brættets drejning, så den beige markering flugter med feltet
     });
-    this.target.set(0, this.tableTopY + this.pieceY, 0);
-    this.radius = this.squareSize * 10.5;
+    // To faste kamera-afstande: tættere på i himmel-scenen (nextScene, ingen bord), så man
+    // ikke kan se, at brættet bare svæver frit i kanten af billedet uden noget under sig.
+    this.tableRadius = this.squareSize * 10.5;
+    this.skyRadius = this.squareSize * 8.6625;
+    this.radius = this.tableRadius;
+    this.applyTableTopY(this.tableTopY);
+  }
+
+  // Flytter bræt, felter, kamera-mål og lysets skygge-sigte op/ned til den rigtige højde, og
+  // tilpasser skyggeopsamlerens størrelse til det, der nu rent faktisk står på gulvet – brugt
+  // både ved første indlæsning og når nextScene() slår bordet til/fra.
+  applyTableTopY(topY) {
+    this.tableTopY = topY;
+    if (this.boardObj) this.boardObj.position.y = this.boardBaseY + topY;
+    this.squareNodes.forEach((mesh) => { mesh.position.y = topY + this.pieceY + 0.0006; });
+    this.target.set(0, topY + this.pieceY, 0);
+    this.radius = this.hasTable ? this.tableRadius : this.skyRadius;
     this.updateCameraFromOrbit();
+    if (this.keyLight) {
+      // Sigt midt på brættet/brikkerne, så skyggens kasse (sat i buildLighting) rammer dem rigtigt
+      // uanset scene – der er intet gulv at dække i himmel-scenen, kun selve brættet.
+      this.keyLight.target.position.set(0, topY + this.pieceY * 0.5, 0);
+      this.keyLight.target.updateMatrixWorld();
+    }
+    if (this.groundShadow) {
+      // Kun med bord er der noget (bordets ben) at tage imod en kontaktskygge for – i himmel-scenen
+      // svæver brættet frit i den åbne luft uden noget gulv under sig.
+      this.groundShadow.visible = this.hasTable;
+      if (this.hasTable && this.tableBounds) this.setGroundShadowFootprint(this.tableBounds);
+    }
+    if (this.ready && this.opts) this.render();
+  }
+
+  // Pilen i hjørnet: skifter mellem "bord + bræt" (i stuen) og "kun bræt og brikker, svævende" (i
+  // den skyede himmel).
+  nextScene() {
+    this.hasTable = !this.hasTable;
+    if (this.tableRoot) this.tableRoot.visible = this.hasTable;
+    this.applyEnvironment();
+    this.applyTableTopY(this.hasTable ? this.fullTableTopY : FLOAT_HEIGHT);
   }
 
   // ----- Brikker -----
