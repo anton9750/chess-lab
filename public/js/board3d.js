@@ -19,10 +19,23 @@
 
 const FILES_3D = ["a", "b", "c", "d", "e", "f", "g", "h"];
 const GLTF_PATH = "models/chess_set/chess_set_4k.gltf";
+const TABLE_GLTF_PATH = "table/chinese_tea_table_4k.gltf/chinese_tea_table_4k.gltf";
+// Panoramabillede af et rum (Poly Havens "Solitude Interior" HDRI, forhåndskonverteret til en
+// almindelig PNG i scripts/convert-exr.mjs) – bruges som baggrund, man kan dreje rundt om, og
+// som lyskilde/refleksion, så brikkerne ikke bare svæver i et sort tomrum.
+const ENV_PATH = "env/interior_2k.png";
 // Springerne er modelleret i profil i stedet for mod modstanderen – dette er bedste bud på
 // hvor meget (og hvilken vej) de skal drejes. Hvis det stadig er forkert: prøv -KNIGHT_FACING_WHITE
 // i stedet for KNIGHT_FACING_WHITE i makePieceMesh(), eller juster selve vinklen her.
 const KNIGHT_FACING_WHITE = Math.PI;
+// Bordet (Poly Havens "Chinese Tea Table") står nu kvadratisk/akse-ret (se loadAssets), men
+// selve brætmodellen er modelleret med hjørnet fremad ("diamant") – drej hele bræt+felter+brikker
+// 45° om Y, så brættets sider flugter med bordets, i stedet for at stå på skrå oven på det.
+const BOARD_YAW = Math.PI / 4;
+function rotateXZ(x, z, angle = BOARD_YAW) {
+  const cos = Math.cos(angle), sin = Math.sin(angle);
+  return { x: x * cos - z * sin, z: x * sin + z * cos };
+}
 
 class Board3D {
   constructor(wrapEl) {
@@ -44,6 +57,7 @@ class Board3D {
 
     this.squareSize = 0.058; // overskrives, når modellen er loadet
     this.pieceY = 0.017;
+    this.tableTopY = 0; // overskrives med bordpladens højde, når bordet er loadet
     this.pieceMeshes = {};   // felt → THREE.Object3D (den brik, der står der lige nu)
     this.squareNodes = [];   // 64 usynlige felter til klik + fremhævning (fast position, index = row*8+col)
     this.lastFlipped = null;
@@ -60,7 +74,7 @@ class Board3D {
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
     this.scene = new THREE.Scene();
-    this.scene.background = new THREE.Color(0x1b1814);
+    this.scene.background = new THREE.Color(0x1b1814); // midlertidig baggrund, til panoramaet (loadEnvironment) er klar
 
     this.camera = new THREE.PerspectiveCamera(42, 1, 0.01, 10);
     this.target = new THREE.Vector3(0, 0, 0); // sættes præcist, når brættets højde kendes
@@ -109,27 +123,54 @@ class Board3D {
     key.shadow.mapSize.set(1024, 1024);
     key.shadow.camera.near = 0.1;
     key.shadow.camera.far = 3;
-    key.shadow.camera.left = -0.4;
-    key.shadow.camera.right = 0.4;
-    key.shadow.camera.top = 0.4;
-    key.shadow.camera.bottom = -0.4;
+    // Bred nok til at dække både brættet/bordpladen OG bordets ben helt ned til gulvet
+    // (target sættes midt mellem gulv og bordplade i loadAssets, når bordets højde er kendt).
+    key.shadow.camera.left = -0.8;
+    key.shadow.camera.right = 0.8;
+    key.shadow.camera.top = 0.8;
+    key.shadow.camera.bottom = -0.8;
     key.shadow.bias = -0.0008;
     this.scene.add(key);
+    this.scene.add(key.target);
+    this.keyLight = key;
     const fill = new THREE.DirectionalLight(0xdfeaff, 0.5);
     fill.position.set(-0.8, 0.5, -0.6);
     this.scene.add(fill);
 
-    // Et simpelt "studie"-miljø, så de ikke-metalliske PBR-materialer ikke ser flade ud
-    const pmrem = new THREE.PMREMGenerator(this.renderer);
-    this.scene.environment = pmrem.fromScene(new THREE.Scene(), 0.04).texture;
+    // Simpelt "studie"-miljø som midlertidig belysning, så de ikke-metalliske PBR-materialer
+    // ikke ser flade ud, før det rigtige panorama (loadEnvironment) er færdigindlæst.
+    this.pmrem = new THREE.PMREMGenerator(this.renderer);
+    this.scene.environment = this.pmrem.fromScene(new THREE.Scene(), 0.04).texture;
   }
 
-  buildGround() {
-    const geo = new THREE.CircleGeometry(1.4, 48);
-    const mat = new THREE.MeshStandardMaterial({ color: 0x2a221a, roughness: 0.85, metalness: 0 });
+  // Panoramabillede af et rum som baggrund (man kan dreje kameraet rundt og se det hele vejen
+  // rundt) og som miljøbelysning/refleksion, så brikkerne og bordet ikke står i et tomt rum.
+  async loadEnvironment() {
+    const texture = await new THREE.TextureLoader().loadAsync(ENV_PATH);
+    texture.mapping = THREE.EquirectangularReflectionMapping;
+    texture.colorSpace = THREE.SRGBColorSpace;
+    this.scene.background = texture;
+    this.scene.environment = this.pmrem.fromEquirectangular(texture).texture;
+  }
+
+  // Intet synligt lokalt gulv-mesh: enhver farvet plade (ensfarvet eller blødt udtonet) så forkert
+  // ud, fordi den aldrig rigtig matcher stengulvet i panoramabaggrunden (loadEnvironment). I stedet
+  // tilføjes en helt usynlig "skyggeopsamler" under bordets ben (buildGroundShadow, kaldt når
+  // bordets mål kendes), så benene får et kontaktpunkt uden at der ses nogen form/farve.
+  buildGround() {}
+
+  // Usynlig plade, kun lige stor nok til bordets fodaftryk, der tager imod benenes kontaktskygge
+  // (uden den ses selv slet ikke noget sted, benene ikke dækker).
+  buildGroundShadow(tableBounds) {
+    const radius = Math.max(
+      tableBounds.max.x - tableBounds.min.x,
+      tableBounds.max.z - tableBounds.min.z
+    ) * 0.5 + 0.03;
+    const geo = new THREE.CircleGeometry(radius, 48);
+    const mat = new THREE.ShadowMaterial({ opacity: 0.45 });
     const ground = new THREE.Mesh(geo, mat);
     ground.rotation.x = -Math.PI / 2;
-    ground.position.y = -0.001;
+    ground.position.y = 0.0005;
     ground.receiveShadow = true;
     this.scene.add(ground);
   }
@@ -155,7 +196,31 @@ class Board3D {
 
   async loadAssets() {
     const loader = new THREE.GLTFLoader();
-    const gltf = await loader.loadAsync(GLTF_PATH);
+    const [gltf, tableGltf] = await Promise.all([
+      loader.loadAsync(GLTF_PATH),
+      loader.loadAsync(TABLE_GLTF_PATH),
+      this.loadEnvironment(),
+    ]);
+
+    // Bordet (Poly Havens "Chinese Tea Table") har sin egen oprindelse centreret i X/Z,
+    // ligesom brættet, med benene stående på gulvet ved y=0 – så det passer til den
+    // eksisterende gulv-cirkel uden at skulle flyttes. Brættets og brikkernes y-positioner
+    // løftes bagefter op med bordpladens højde, så brættet står oven på bordet.
+    const tableRoot = tableGltf.scene;
+    // Bordets model er modelleret med hjørnet fremad ("diamant"); drej det 45°, så siderne
+    // flugter med brættets rækker/linjer i stedet for at stå på skrå.
+    tableRoot.rotation.y = Math.PI / 4;
+    tableRoot.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
+    this.scene.add(tableRoot);
+    const tableBounds = new THREE.Box3().setFromObject(tableRoot);
+    this.tableTopY = tableBounds.max.y;
+    if (this.keyLight) {
+      // Midt mellem gulv og bordplade, så skyggens kasse (sat i buildLighting) dækker både
+      // brikkerne oven på bordet og bordets ben helt ned til gulvet.
+      this.keyLight.target.position.set(0, this.tableTopY * 0.5, 0);
+      this.keyLight.target.updateMatrixWorld();
+    }
+    this.buildGroundShadow(tableBounds);
 
     const pawns = [];
     const knights = { white: [], black: [] }; // springerne er to forskellige (spejlvendte) modeller, ikke den samme genbrugt
@@ -198,8 +263,11 @@ class Board3D {
     if (boardMesh) {
       const board = new THREE.Mesh(boardMesh.geometry, boardMesh.material);
       board.position.copy(boardMesh.position);
+      board.position.y += this.tableTopY;
       board.quaternion.copy(boardMesh.quaternion);
+      board.rotateY(BOARD_YAW);
       board.scale.copy(boardMesh.scale);
+      board.castShadow = true;
       board.receiveShadow = true;
       this.scene.add(board);
     }
@@ -208,9 +276,11 @@ class Board3D {
     this.squareNodes.forEach((mesh) => {
       const { row, col } = mesh.userData;
       mesh.scale.set(this.squareSize * 0.96, this.squareSize * 0.96, 1);
-      mesh.position.set((col - 3.5) * this.squareSize, this.pieceY + 0.0006, (row - 3.5) * this.squareSize);
+      const { x, z } = rotateXZ((col - 3.5) * this.squareSize, (row - 3.5) * this.squareSize);
+      mesh.position.set(x, this.tableTopY + this.pieceY + 0.0006, z);
+      mesh.rotateZ(BOARD_YAW); // følger brættets drejning, så den beige markering flugter med feltet
     });
-    this.target.set(0, this.pieceY, 0);
+    this.target.set(0, this.tableTopY + this.pieceY, 0);
     this.radius = this.squareSize * 10.5;
     this.updateCameraFromOrbit();
   }
@@ -233,6 +303,8 @@ class Board3D {
     // Springerne er modelleret i profil (vender ud ad filen), ikke mod modstanderen hen over
     // brættet – drej dem, så hovedet/ansigtet vender mod den anden side.
     if (piece.type === "n") obj.rotateY(piece.color === "w" ? KNIGHT_FACING_WHITE : -KNIGHT_FACING_WHITE);
+    // Følg brættets 45°-drejning (BOARD_YAW), ellers vender brikkerne (mest mærkbart springerne) forkert vej.
+    obj.rotateY(BOARD_YAW);
     return obj;
   }
 
@@ -253,7 +325,8 @@ class Board3D {
 
   worldPosOf(square, flipped) {
     const { row, col } = this.rowColOf(square, flipped);
-    return new THREE.Vector3((col - 3.5) * this.squareSize, this.pieceY, (row - 3.5) * this.squareSize);
+    const { x, z } = rotateXZ((col - 3.5) * this.squareSize, (row - 3.5) * this.squareSize);
+    return new THREE.Vector3(x, this.tableTopY + this.pieceY, z);
   }
 
   // ----- Tegning (samme kald som BoardView.draw) -----
@@ -281,7 +354,10 @@ class Board3D {
     chess.board().forEach((row) => row.forEach((piece) => {
       if (!piece) return;
       const pos = this.worldPosOf(piece.square, flipped);
-      const mesh = this.makePieceMesh(piece, pos.x);
+      // Dronningens/kongens side afgøres ud fra den uroterede (bræt-lokale) x – ikke den endelige,
+      // drejede verdens-x (BOARD_YAW blander x/z), ellers vælges forkert springer-model.
+      const { col } = this.rowColOf(piece.square, flipped);
+      const mesh = this.makePieceMesh(piece, (col - 3.5) * this.squareSize);
       if (!mesh) return;
       mesh.position.copy(pos);
       this.scene.add(mesh);
@@ -495,11 +571,8 @@ class Board3D {
     this.canvas.addEventListener("pointerup", endPointer);
     this.canvas.addEventListener("pointercancel", endPointer);
 
-    this.canvas.addEventListener("wheel", (e) => {
-      e.preventDefault();
-      this.radius = Math.max(this.squareSize * 6, Math.min(this.squareSize * 18, this.radius + e.deltaY * 0.0003));
-      this.updateCameraFromOrbit();
-    }, { passive: false });
+    // Zoom er bevidst slået fra: kameraets afstand er fast, så man ikke kan zoome ud og se,
+    // at bordet ikke står helt rigtigt i forhold til panoramabaggrunden (loadEnvironment).
   }
 
   averagePointer() {

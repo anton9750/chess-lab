@@ -116,6 +116,11 @@ function createBoardFacade(view2d, view3d) {
     view3d.canvas.classList.toggle("hidden", !active3D);
     view2d.boardEl.classList.toggle("hidden", active3D);
     view2d.arrowsEl.classList.toggle("hidden", active3D);
+    // 3D Mode fylder hele skærmen: menuen gemmes bag pilen i venstre side,
+    // så brættet får al pladsen (se btn-board3d-nav-toggle nedenfor).
+    document.body.classList.toggle("board3d-fullscreen", active3D);
+    document.body.classList.remove("board3d-nav-open");
+    document.body.classList.remove("board3d-panel-open");
   }
 
   facade.draw = (opts) => {
@@ -1296,6 +1301,10 @@ $("btn-flip").addEventListener("click", () => {
   state.flipped = !state.flipped;
   drawAll();
 });
+$("btn-toggle-3d").addEventListener("click", () => {
+  settings.board3D = !settings.board3D;
+  applySettingsChange();
+});
 
 // Piletasterne på tastaturet
 document.addEventListener("keydown", (e) => {
@@ -1689,6 +1698,7 @@ function applySettingsChange() {
   saveSettings();
   applyBoardTheme();
   drawSettings();
+  $("btn-toggle-3d").classList.toggle("active", !!settings.board3D);
   if (currentPage === "play") drawAll();
   else if (Pages[currentPage] && Pages[currentPage].draw) Pages[currentPage].draw();
 }
@@ -1720,6 +1730,25 @@ document.querySelectorAll(".sidebar [data-nav], .sidebar [data-action]").forEach
   });
 });
 
+// 3D Mode: pilene i hver side folder menuen/panelet ud som overlæg (se createBoardFacade ovenfor)
+$("btn-board3d-nav-toggle").addEventListener("click", () => {
+  document.body.classList.toggle("board3d-nav-open");
+});
+$("btn-board3d-panel-toggle").addEventListener("click", () => {
+  document.body.classList.toggle("board3d-panel-open");
+});
+// Klik udenfor menuen/panelet (fx på selve 3D-brættet) lukker dem igen
+document.addEventListener("pointerdown", (e) => {
+  if (document.body.classList.contains("board3d-nav-open")
+    && !e.target.closest("#sidebar") && !e.target.closest("#btn-board3d-nav-toggle")) {
+    document.body.classList.remove("board3d-nav-open");
+  }
+  if (document.body.classList.contains("board3d-panel-open")
+    && !e.target.closest(".panel.page-panel") && !e.target.closest("#btn-board3d-panel-toggle")) {
+    document.body.classList.remove("board3d-panel-open");
+  }
+});
+
 
 // ----- 14. Lille besked (toast) -----
 
@@ -1736,6 +1765,7 @@ function showToast(text) {
 // ----- 15. Start -----
 
 applyBoardTheme();
+$("btn-toggle-3d").classList.toggle("active", !!settings.board3D);
 document.body.classList.toggle("sidebar-collapsed", settings.sidebarCollapsed);
 drawNewGameTab();
 document.body.dataset.page = "play";

@@ -77,6 +77,7 @@
     <symbol id="i-back" viewBox="0 0 24 24"><path d="M15 5 8 12l7 7" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
     <symbol id="i-random" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2a10 10 0 1 0 0 20V2Z"/><circle cx="12" cy="12" r="9.2" fill="none" stroke="currentColor" stroke-width="1.6"/></symbol>
     <symbol id="i-swap" viewBox="0 0 24 24"><path d="M4 8h14m-3.5-3.5L18 8l-3.5 3.5M20 16H6m3.5-3.5L6 16l3.5 3.5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-cube" viewBox="0 0 24 24"><path d="M12 2.5 21 7.5v9L12 21.5 3 16.5v-9L12 2.5Z" fill="none" stroke="currentColor" stroke-width="2"/><path d="M3 7.5 12 12.5m0 0L21 7.5M12 12.5V21.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
   </svg>
 
   <!-- ===================================================================
@@ -186,6 +187,15 @@
       <a class="nav-item small" data-action="help" href="#"><svg class="nav-icon"><use href="#i-help"/></svg><span class="nav-label">Help</span></a>
     </div>
   </nav>
+
+  <!-- 3D Mode: lille pil i venstre side, der folder menuen ud som et overlæg oven på
+        3D-scenen, så selve brættet kan fylde hele skærmen resten af tiden -->
+  <button class="board3d-nav-toggle" id="btn-board3d-nav-toggle" title="Menu">
+    <svg><use href="#i-chevron"/></svg>
+  </button>
+  <button class="board3d-panel-toggle" id="btn-board3d-panel-toggle" title="Game panel">
+    <svg><use href="#i-chevron"/></svg>
+  </button>
 
   <!-- ===================================================================
        Spil: bræt i midten, panel til højre
@@ -302,6 +312,7 @@
             <button class="nav-btn" id="btn-next" title="Next move (→)"><svg><use href="#i-next"/></svg></button>
             <button class="nav-btn" id="btn-last" title="Last move"><svg><use href="#i-last"/></svg></button>
             <button class="nav-btn" id="btn-flip" title="Flip board"><svg><use href="#i-flip"/></svg></button>
+            <button class="nav-btn" id="btn-toggle-3d" title="Toggle 3D Mode"><svg><use href="#i-cube"/></svg></button>
             <button class="nav-btn" id="btn-settings" title="Settings"><svg><use href="#i-settings"/></svg></button>
           </div>
         </div>

@@ -332,6 +332,108 @@ body.sidebar-collapsed [data-action="collapse"] svg {
   transform: rotate(180deg);
 }
 
+/* 3D Mode: brættet fylder hele skærmen, og menuen gemmes bag en lille pil i kanten.
+   Sidebaren tages ud af flex-layoutet (position:fixed), så resten bare folder sig ud
+   og bruger pladsen, og den lægger sig så oven på 3D-scenen som et overlæg, når man
+   folder den ud med pilen – uden at skubbe brættet rundt. */
+body.board3d-fullscreen {
+  --sidebar-width: 0px;
+  --panel-width: 0px;
+  /* Samme regnestykke som den almindelige --board-size, men uden det faste 820px-loft –
+     3D-scenen må gerne fylde mere end et almindeligt 2D-bræt ville have godt af. */
+  --board-size: min(
+    calc(100vh - 2 * var(--bar-height) - 24px),
+    calc(100vw - var(--sidebar-width) - var(--panel-width) - 64px)
+  );
+}
+/* Selve brættet behøver ikke være kvadratisk som 2D-brættet (felterne skal jo ikke
+   passe sammen i et gitter) – lad det strække sig ud i fuld bredde også, ikke kun
+   så højt det kan blive. Kameraets aspect ratio i board3d.js tilpasser sig selv. */
+body.board3d-fullscreen .board-column {
+  width: 100%;
+}
+body.board3d-fullscreen .board-wrap {
+  width: 100%;
+  height: calc(100vh - 2 * var(--bar-height) - 24px);
+}
+body.board3d-fullscreen .player-bar {
+  width: 100%;
+}
+body.board3d-fullscreen .panel.page-panel {
+  position: fixed;
+  inset: 0 0 0 auto;
+  width: 420px; /* --panel-width er sat til 0 her (bruges af brættets størrelse) */
+  height: auto;
+  border-radius: 0;
+  z-index: 60;
+  transform: translateX(100%);
+  transition: transform 0.22s ease;
+  box-shadow: -8px 0 32px rgba(0, 0, 0, 0.55);
+}
+body.board3d-fullscreen.board3d-panel-open .panel.page-panel {
+  transform: translateX(0);
+}
+
+.board3d-panel-toggle {
+  display: none;
+  position: fixed;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 22px;
+  height: 64px;
+  align-items: center;
+  justify-content: center;
+  background: var(--chip);
+  color: var(--text-soft);
+  border-radius: 8px 0 0 8px;
+  z-index: 61;
+}
+.board3d-panel-toggle:hover { background: var(--chip-hover); color: var(--text); }
+.board3d-panel-toggle svg { width: 16px; height: 16px; transform: rotate(90deg); }
+body.board3d-fullscreen .board3d-panel-toggle { display: flex; }
+body.board3d-fullscreen.board3d-panel-open .board3d-panel-toggle {
+  right: 420px;
+  transition: right 0.22s ease;
+}
+body.board3d-fullscreen.board3d-panel-open .board3d-panel-toggle svg { transform: rotate(-90deg); }
+body.board3d-fullscreen .sidebar {
+  position: fixed;
+  inset: 0 auto 0 0;
+  width: 150px; /* --sidebar-width er sat til 0 her (bruges af brættets størrelse), så egen bredde sættes direkte */
+  z-index: 60;
+  transform: translateX(-100%);
+  transition: transform 0.22s ease;
+  box-shadow: 8px 0 32px rgba(0, 0, 0, 0.55);
+}
+body.board3d-fullscreen.board3d-nav-open .sidebar {
+  transform: translateX(0);
+}
+
+.board3d-nav-toggle {
+  display: none;
+  position: fixed;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 22px;
+  height: 64px;
+  align-items: center;
+  justify-content: center;
+  background: var(--chip);
+  color: var(--text-soft);
+  border-radius: 0 8px 8px 0;
+  z-index: 61;
+}
+.board3d-nav-toggle:hover { background: var(--chip-hover); color: var(--text); }
+.board3d-nav-toggle svg { width: 16px; height: 16px; transform: rotate(-90deg); }
+body.board3d-fullscreen .board3d-nav-toggle { display: flex; }
+body.board3d-fullscreen.board3d-nav-open .board3d-nav-toggle {
+  left: 150px;
+  transition: left 0.22s ease;
+}
+body.board3d-fullscreen.board3d-nav-open .board3d-nav-toggle svg { transform: rotate(90deg); }
+
 /* ===================================================================
    Spil-layout: bræt + panel
    =================================================================== */
@@ -995,6 +1097,10 @@ body.sidebar-collapsed [data-action="collapse"] svg {
 .nav-btn:hover:not(:disabled) {
   background: var(--hover);
   color: var(--text);
+}
+.nav-btn#btn-toggle-3d.active {
+  background: var(--accent-mid);
+  color: #fff;
 }
 
 /* ===== Beskeder om partiet ===== */
